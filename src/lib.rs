@@ -11,7 +11,7 @@
 //! In some cases where embedded-hal support is not available (ex. ADCs), the trait implmentation needs to be added for the particular controller.
 //! Finally, board support crates typically take ownership of the peripherals struct. In cases where this is challenging, macros can be used to pass only the needed peripherals to the board instance.
 //!
-//! ![BSP Architechture Diagam](/images/uFerrisBSP.png)
+//! ![BSP Architechture Diagam](https://github.com/uFerris-rs/uferris-bsp/blob/master/images/uFerrisBSP.png)
 //!
 //! ## Current Supported Xiaos:
 //! - Xiao ESP32-C3
@@ -43,7 +43,7 @@ use embedded_hal::i2c::I2c;
 use embedded_hal::pwm::SetDutyCycle;
 
 // Power Board Extension Imports
-pub mod pwr_brd {
+mod pwr_brd {
     pub use embedded_hal_bus::spi::RefCellDevice;
     pub use embedded_sdmmc::SdCard;
     pub use embedded_sdmmc::VolumeManager;
@@ -65,22 +65,19 @@ pub mod pins;
 
 // Device Specific HAL imports
 #[cfg(feature = "xiao-esp32c3")]
-pub mod esp_hal {
+mod esp_hal {
     pub use esp_hal::Blocking;
-    pub use esp_hal::analog::adc::{Adc, AdcConfig};
     pub use esp_hal::delay::Delay;
-    pub use esp_hal::gpio::{Input, InputConfig, Level, Output, OutputConfig};
-    pub use esp_hal::i2c::master::I2c;
+    pub use esp_hal::gpio::{Input, Output};
     pub use esp_hal::ledc::LowSpeed;
     pub use esp_hal::ledc::channel::Channel;
     pub use esp_hal::peripherals::GPIO2;
     pub use esp_hal::spi::master::Spi;
-    pub use esp_hal::time::Rate;
 }
 
 // Device Specific Component Imports
 #[cfg(feature = "xiao-esp32c3")]
-pub mod esp_components {
+mod esp_components {
     pub use crate::components::i2cdevices::I2cDevices;
     #[cfg(feature = "power-board")]
     pub use crate::components::spidevices::SpiDevices;
