@@ -1,8 +1,7 @@
-use embedded_hal_bus::i2c::RefCellDevice;
-use esp_hal::{Blocking, i2c::master::I2c};
+use embedded_hal::i2c::I2c;
 use ina219::{SyncIna219, calibration::IntCalibration};
 
-pub struct I2cDevices<'d> {
-    pub shared_device: RefCellDevice<'d, I2c<'d, Blocking>>,
-    pub ina219_device: SyncIna219<RefCellDevice<'d, I2c<'d, Blocking>>, IntCalibration>,
+pub struct I2cDevices<I2C> {
+    pub shared_device: I2C, // Used for generic access if needed
+    pub ina219: SyncIna219<I2C, IntCalibration>,
 }
