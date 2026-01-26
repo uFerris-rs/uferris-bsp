@@ -10,27 +10,24 @@
 //! In summary, this crate is meant to provide a software abstraction to easily drive the uFerris board with any supported Xiao Controller.
 //!
 //! ## Crate Architechture
-//! The uFerris BSP architechture follows the architechture shown in the figure below. The BSP utilizes the `embedded-hal` traits at the lower level as much as possible. In most cases the controller HALs provide implementations for `embedded-hal` traits. These traits are then used to define the board’s components.
-//! These components then are used as members in the board struct with methods to control the different board features. The reasoning behind this architechture is to ease the addition of Xiao baord support by keeping changes between different boards to a minimum.
-//! In some cases where embedded-hal support is not available (ex. ADCs), the trait implmentation needs to be added for the particular controller.
-//! Finally, board support crates typically take ownership of the peripherals struct. In cases where this is challenging, macros can be used to pass only the needed peripherals to the board instance.
+//! The uFerris BSP architechture follows the layer scheme shown in the figure below. The upper uFerris board logic layer is meant to provide a hardware agnositc uniform interface across all Xiao controllers.
+//! The second adapter layer is introduced to create the mappings between the logic and the individual device HALs. The adapter layer also utilizes the `embedded-hal` traits where possible. In most cases the controller HALs provide implementations for `embedded-hal` traits.
 //!
-//! ![BSP Architechture Diagam](https://github.com/uFerris-rs/uferris-bsp/blob/master/images/uFerrisBSP.png)
+//! ![BSP Architechture Diagam](https://raw.githubusercontent.com/uFerris-rs/uferris-bsp/master/images/uFerrisBSP.png)
 //!
 //! ## Current Supported Xiaos:
 //! - Xiao ESP32-C3
 //!
 //! ## `async` Support
-//! This crate does not support `async` yet.
+//! This crate does not support `async` yet. Support would entail adding board `async` method calls for the different functions in `lib.rs`.
 //!
 //! ## Contributing to the uFerris BSP - Adding Xiao Support:
-//! If you'd like to add support please follow the contribution instructions.
-//! How to Contribute
-//! 1. Add feature in `Cargo.toml` for the new board importing the board HAL.
-//! 2. In `pins.rs`, add a `Pins` struct definition for new Device
-//! 3. Add a trait implmentation for reading the ADC LDR pin.
-//! 4. In `lib.rs` create a feature gated board driver struct & add needed imports
-//! 5. Under devices/, create a [board_name].rs and add a `new` implementation for the device.
+//! Adding support for a new Xiao entails two things:
+//! 1. **Adding a Feature Flag**: This entails adding a feature flag in `Cargo.toml` that imports the new device HAL.
+//! 2. **Creating a Board Adapter**: This entails adding a new board definition (adapter layer) under the crate `boards/` folder.
+//!
+//! Other files in the crate should remain unchanged.
+//! It is recommended to view the existing board implementations for guidance on creating an adapter layer.
 //!
 //! ## Feature Flags
 #![doc = document_features::document_features!()]
@@ -42,26 +39,22 @@
 // Imports
 // ------------------------------------------
 use core::fmt;
+use core::marker::PhantomData;
 use embedded_hal::digital::{InputPin, OutputPin};
 use embedded_hal::i2c::I2c;
 #[cfg(feature = "power-board")]
 use ina219::{SyncIna219, address::Address, calibration::IntCalibration};
 
 // Export generic components so users can access types (like SevenSegDigit)
-pub mod components;
-pub use components::io_expander::{SevenSegDigit, SwPos};
+mod components;
+use components::io_expander::SwPos;
 
 // Export the specific board implementation based on features
 pub mod boards;
 
-#[cfg(feature = "xiao-esp32c3")]
-pub use boards::xiao_esp32c3::*;
-
 use embedded_hal::pwm::SetDutyCycle;
 #[cfg(feature = "power-board")]
-pub use embedded_sdmmc::{
-    BlockDevice, Mode, SdCard, TimeSource, Timestamp, VolumeIdx, VolumeManager,
-};
+use embedded_sdmmc::{BlockDevice, Mode, TimeSource, Timestamp, VolumeIdx, VolumeManager};
 
 // ------------------------------------------
 // Constants
@@ -343,16 +336,27 @@ where
     /// Initialize / Check SD Card
     /// Returns the size of the SD card in bytes if detected.
     pub fn init_sd_card(&mut self) -> Result<u64, InitError> {
-        // In the new architecture, the VolumeManager is already created.
-        // We just check if it exists and verify we can talk to the card.
-        match self.vol_mgr.as_ref() {
-            Some(mgr) => {
-                // We access the underlying device to get the size
-                mgr.device().num_bytes().map_err(|_| InitError)
-            }
-            None => Err(InitError),
-        }
+        let mgr = self.vol_mgr.as_mut().ok_or(InitError)?;
+
+        // Variable to capture the card size result
+        let mut card_size_result = Err(InitError);
+
+        // Access underying device (SD Card Block Device). TimeSource return value is ignored.
+        let _ = mgr.device(|dev| {
+            // Initialize device
+            let blocks_res = dev.num_blocks().map_err(|_| InitError);
+
+            // Update size
+            card_size_result = blocks_res.map(|b| b.0 as u64 * 512);
+
+            // Return time source as required by API
+            // Strange behaviour from API, not sure why this is required.
+            crate::DummyTimeSource::default()
+        });
+
+        card_size_result
     }
+
     /// Read a file from the root directory in chunks
     pub fn read_file_chunked<F>(&mut self, filename: &str, mut func: F)
     where
@@ -429,7 +433,6 @@ where
 // ------------------------------------------
 // Helper Types
 // ------------------------------------------
-
 #[cfg(feature = "power-board")]
 #[derive(Default, Clone, Copy)]
 pub struct DummyTimeSource;

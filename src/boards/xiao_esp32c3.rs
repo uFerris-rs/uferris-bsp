@@ -68,13 +68,19 @@ type EspSpi = Spi<'static, esp_hal::Blocking>;
 type SdBlockDevice =
     embedded_sdmmc::SdCard<SpiRefCellDevice<'static, EspSpi, Output<'static>, Delay>, Delay>;
 
-// Dummy types for when feature is disabled
-#[cfg(not(feature = "power-board"))]
-type SdBlockDevice = ();
-
 // ------------------------------------------
 // uFerris Board Type Alias
 // ------------------------------------------
+#[cfg(not(feature = "power-board"))]
+pub type UferrisEsp32 = Uferris<
+    Output<'static>,  // LED (D1)
+    Input<'static>,   // Button (D3)
+    EspBuzzerChannel, // Buzzer (D4)
+    SharedI2c,        // I2C
+    LdrAdc<'static>,  // LDR
+>;
+
+#[cfg(feature = "power-board")]
 pub type UferrisEsp32 = Uferris<
     Output<'static>,  // LED (D1)
     Input<'static>,   // Button (D3)

@@ -6,12 +6,12 @@ edition = "2024"
 [features]
 #! ⚠️ To activate a different device feature, default features need to be disabled 
 
-default = ["xiao-esp32c3", "power-board"]
+default = ["xiao-esp32c3"]
 ## Xiao ESP32-C3 Device Support
 xiao-esp32c3 = ["esp-hal/esp32c3", "esp-rtos/esp32c3", "esp-rtos/embassy"]
 ## uFerris Megalops Power Board Extension Support
 power-board = []
-## embassy Support
+## embassy Support Feature Flag
 embassy = []
 
 
