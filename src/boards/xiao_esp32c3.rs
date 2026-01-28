@@ -95,7 +95,11 @@ pub type UferrisEsp32 = Uferris<
 // ------------------------------------------
 // Board Initialization Function
 // ------------------------------------------
-pub fn init(peripherals: Peripherals) -> UferrisEsp32 {
+pub fn uferris_init(peripherals: Peripherals) -> UferrisEsp32 {
+    // --------------------------------------
+    //            Embassy Setup
+    // Needs to be feature gated
+    // --------------------------------------
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     let sw_interrupt =
         esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);

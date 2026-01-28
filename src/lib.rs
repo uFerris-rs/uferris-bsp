@@ -89,7 +89,7 @@ where
     BD: PowerConstraints,
 {
     /// Create a new generic uFerris board instance.
-    pub fn new(
+    fn new(
         led1_pin: LED,
         sw_btn5_pin: BTN,
         pwm_pin: BUZZ,
