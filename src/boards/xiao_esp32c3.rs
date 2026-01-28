@@ -10,10 +10,11 @@ use esp_hal::{
     ledc::{
         LowSpeed,
         channel::{Channel, ChannelIFace},
-        timer::{Timer, TimerIFace},
+        timer::{self, Timer, TimerIFace},
     },
     peripherals::{GPIO2, Peripherals},
     time::Rate,
+    timer::timg::TimerGroup,
 };
 use static_cell::StaticCell;
 
@@ -78,6 +79,7 @@ pub type UferrisEsp32 = Uferris<
     EspBuzzerChannel, // Buzzer (D4)
     SharedI2c,        // I2C
     LdrAdc<'static>,  // LDR
+    (),
 >;
 
 #[cfg(feature = "power-board")]
@@ -94,7 +96,10 @@ pub type UferrisEsp32 = Uferris<
 // Board Initialization Function
 // ------------------------------------------
 pub fn init(peripherals: Peripherals) -> UferrisEsp32 {
-    let delay = Delay::new();
+    let timg0 = TimerGroup::new(peripherals.TIMG0);
+    let sw_interrupt =
+        esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
+    esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
 
     // --------------------------------------
     //              ADC Setup
@@ -144,10 +149,10 @@ pub fn init(peripherals: Peripherals) -> UferrisEsp32 {
         ledc.timer::<esp_hal::ledc::LowSpeed>(esp_hal::ledc::timer::Number::Timer0);
 
     buzzer_timer
-        .configure(esp_hal::ledc::timer::config::Config {
-            duty: esp_hal::ledc::timer::config::Duty::Duty10Bit,
-            clock_source: esp_hal::ledc::timer::LSClockSource::APBClk,
-            frequency: esp_hal::time::Rate::from_khz(2500),
+        .configure(timer::config::Config {
+            duty: timer::config::Duty::Duty14Bit,
+            clock_source: timer::LSClockSource::APBClk,
+            frequency: Rate::from_hz(2700u32),
         })
         .unwrap();
 
@@ -197,9 +202,6 @@ pub fn init(peripherals: Peripherals) -> UferrisEsp32 {
             crate::DummyTimeSource::default(),
         ))
     };
-
-    #[cfg(not(feature = "power-board"))]
-    let vol_mgr = None;
 
     // --------------------------------------
     //          Board Instantiation

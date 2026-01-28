@@ -79,41 +79,58 @@ pub enum SevenSegDigit {
 // Driver Struct
 // ==========================================
 
-/// Driver for the TCA6424 I/O Expander on the uFerris board.
-/// This driver owns the I2C bus handle passed to it.
 pub struct IoExpander<I2C> {
     i2c: I2C,
+    shadow_port2: u8, // Add this
 }
 
 impl<I2C: I2c> IoExpander<I2C> {
-    /// Create a new instance of the IO Expander driver.
     pub fn new(i2c: I2C) -> Self {
-        Self { i2c }
+        Self {
+            i2c,
+            shadow_port2: 0,
+        }
     }
 
-    /// Initialize the I/O expander.
-    /// Configures directions and resets outputs.
     pub fn init(&mut self) -> Result<(), I2C::Error> {
-        // Write I/O Direction to TCA6424 Config Registers (Auto-increment is usually supported)
-        // Note: Check if your chip supports auto-increment writes for consecutive registers.
-        // If not, you might need individual writes. Assuming standard TCA behavior here:
-        self.i2c.write(
-            TCA6424_ADDR,
-            &[CONFIG_PORT0, PORT0_DIR, PORT1_DIR, PORT2_DIR],
-        )?;
+        // Write configuration to each port individually
+        self.i2c.write(TCA6424_ADDR, &[0x0C, PORT0_DIR])?; // Config Port 0
+        self.i2c.write(TCA6424_ADDR, &[0x0D, PORT1_DIR])?; // Config Port 1
+        self.i2c.write(TCA6424_ADDR, &[0x0E, PORT2_DIR])?; // Config Port 2
 
-        // Reset all output ports to low
-        self.i2c.write(TCA6424_ADDR, &[OUT_PORT0, 0, 0, 0])?;
-
+        // Initialize all outputs to LOW (or HIGH if Active Low)
+        self.i2c.write(TCA6424_ADDR, &[0x04, 0x00])?; // Output Port 0
+        self.i2c.write(TCA6424_ADDR, &[0x05, 0x00])?; // Output Port 1
+        self.i2c.write(TCA6424_ADDR, &[0x06, 0x00])?; // Output Port 2
         Ok(())
     }
+    // pub fn init(&mut self) -> Result<(), I2C::Error> {
+    //     self.i2c.write(
+    //         TCA6424_ADDR,
+    //         &[CONFIG_PORT0, PORT0_DIR, PORT1_DIR, PORT2_DIR],
+    //     )?;
 
-    // ----------------------------------------------------------------
-    // LED Control
-    // ----------------------------------------------------------------
+    //     // Explicitly set initial state and update shadow
+    //     let initial_state = 0x00;
+    //     self.shadow_port2 = initial_state;
+    //     self.i2c
+    //         .write(TCA6424_ADDR, &[OUT_PORT0, 0, 0, initial_state])?;
+    //     Ok(())
+    // }
 
+    fn modify_port2<F>(&mut self, f: F) -> Result<(), I2C::Error>
+    where
+        F: FnOnce(u8) -> u8,
+    {
+        // Use the shadow register instead of reading from I2C
+        let new_val = f(self.shadow_port2);
+        self.shadow_port2 = new_val;
+        self.i2c.write(TCA6424_ADDR, &[OUT_PORT2, new_val])
+    }
+
+    // Active Low example
     pub fn led2_on(&mut self) -> Result<(), I2C::Error> {
-        self.modify_port2(|current| current | IoExpPort2::Led2.bits())
+        self.modify_port2(|current| current & !IoExpPort2::Led2.bits())
     }
 
     pub fn led2_off(&mut self) -> Result<(), I2C::Error> {
@@ -248,13 +265,12 @@ impl<I2C: I2c> IoExpander<I2C> {
         Ok((val & mask.bits()) == 0)
     }
 
-    /// Read-Modify-Write helper for Port 2 (Used heavily by LEDs and Digits)
-    fn modify_port2<F>(&mut self, f: F) -> Result<(), I2C::Error>
-    where
-        F: FnOnce(u8) -> u8,
-    {
-        let current = self.read_register(OUT_PORT2)?;
-        let new_val = f(current);
-        self.i2c.write(TCA6424_ADDR, &[OUT_PORT2, new_val])
-    }
+    // fn modify_port2<F>(&mut self, f: F) -> Result<(), I2C::Error>
+    // where
+    //     F: FnOnce(u8) -> u8,
+    // {
+    //     let current = self.read_register(OUT_PORT2)?;
+    //     let new_val = f(current);
+    //     self.i2c.write(TCA6424_ADDR, &[OUT_PORT2, new_val])
+    // }
 }
