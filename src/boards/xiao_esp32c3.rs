@@ -1,10 +1,9 @@
-// src/boards/xiao_esp32c3.rs
-#![cfg(feature = "xiao-esp32c3")]
-
 use core::cell::RefCell;
+use embedded_hal_bus::i2c::RefCellDevice as I2cRefCellDevice;
+#[cfg(feature = "embassy")]
+use esp_hal::timer::timg::TimerGroup;
 use esp_hal::{
     analog::adc::{Adc, AdcConfig, AdcPin, Attenuation},
-    delay::Delay,
     gpio::{Input, InputConfig, Level, Output, OutputConfig},
     i2c::master::I2c,
     ledc::{
@@ -14,14 +13,13 @@ use esp_hal::{
     },
     peripherals::{GPIO2, Peripherals},
     time::Rate,
-    timer::timg::TimerGroup,
 };
 use static_cell::StaticCell;
 
-use embedded_hal_bus::i2c::RefCellDevice as I2cRefCellDevice;
-
 #[cfg(feature = "power-board")]
 use embedded_hal_bus::spi::RefCellDevice as SpiRefCellDevice;
+#[cfg(feature = "power-board")]
+use esp_hal::delay::Delay;
 #[cfg(feature = "power-board")]
 use esp_hal::spi::master::Spi;
 
@@ -64,8 +62,6 @@ pub type EspBuzzerChannel = Channel<'static, LowSpeed>;
 type EspSpi = Spi<'static, esp_hal::Blocking>;
 
 #[cfg(feature = "power-board")]
-// The concrete type for the generic BD parameter
-// This entire stack is owned by Uferris, but it holds a reference to SPI_BUS
 type SdBlockDevice =
     embedded_sdmmc::SdCard<SpiRefCellDevice<'static, EspSpi, Output<'static>, Delay>, Delay>;
 
@@ -98,12 +94,14 @@ pub type UferrisEsp32 = Uferris<
 pub fn uferris_init(peripherals: Peripherals) -> UferrisEsp32 {
     // --------------------------------------
     //            Embassy Setup
-    // Needs to be feature gated
     // --------------------------------------
-    let timg0 = TimerGroup::new(peripherals.TIMG0);
-    let sw_interrupt =
-        esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
-    esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
+    #[cfg(feature = "embassy")]
+    {
+        let timg0 = TimerGroup::new(peripherals.TIMG0);
+        let sw_interrupt =
+            esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
+        esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
+    }
 
     // --------------------------------------
     //              ADC Setup
@@ -181,7 +179,7 @@ pub fn uferris_init(peripherals: Peripherals) -> UferrisEsp32 {
     let vol_mgr = {
         let spi = Spi::new(
             peripherals.SPI2,
-            esp_hal::spi::master::Config::default().with_frequency(Rate::from_mhz(10)),
+            esp_hal::spi::master::Config::default().with_frequency(Rate::from_khz(400)),
         )
         .unwrap()
         .with_sck(peripherals.GPIO8)
@@ -193,6 +191,9 @@ pub fn uferris_init(peripherals: Peripherals) -> UferrisEsp32 {
 
         // CS Pin
         let sd_cs = Output::new(peripherals.GPIO20, Level::High, OutputConfig::default());
+
+        // Create Delay Instance
+        let delay = Delay::new();
 
         // Create SPI Device (Borrows from SPI_BUS static)
         // We do NOT need to make this device static. SdCard owns it.
