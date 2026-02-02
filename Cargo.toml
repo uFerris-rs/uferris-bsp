@@ -2,6 +2,14 @@
 name = "uferris-bsp"
 version = "0.1.0"
 edition = "2024"
+description = "A Board Support Package for the uFerris Learner Board"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/uFerris-rs/uferris-bsp"
+keywords = ["embedded", "uferris", "xiao", "no_std"]
+categories = ["embedded"]
+readme = "README.md"
+homepage = "https://theembeddedrustacean.com/"
+exclude = ["target/debug/*", "assets/*"]
 
 [features]
 #! ⚠️ At least one Xiao device feature must be enabled when building the crate.
