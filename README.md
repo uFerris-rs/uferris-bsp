@@ -15,6 +15,14 @@
 
 <br/>
 
+
+<div align="center">
+
+[![crates.io](https://img.shields.io/crates/v/uferris-bsp.svg)](https://crates.io/crates/uferris-bsp)
+[![docs.rs](https://docs.rs/uferris-bsp/badge.svg)](https://docs.rs/uferris-bsp)
+
+</div>
+
 **uFerris** is a Rust embedded learning/experimentation kit that can accept various **Seeed Studio Xiao** controllers.
 
 The `uferris-bsp` crate provides a **generic Board Support Package** that aims to be mostly MCU-agnostic, allowing the same high-level board API to work across different supported Xiao controllers (ESP32-C3, RP2040, etc.).
