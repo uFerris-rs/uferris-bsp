@@ -69,7 +69,7 @@
 //! ```
 //!
 
-#[cfg(not(any(feature = "xiao-esp32c3", feature = "xiao-esp32c6")))]
+#[cfg(not(any(feature = "xiao-esp32c3", feature = "xiao-esp32c6", feature = "xiao-esp32s3")))]
 compile_error!("At least one Xiao device feature must be enabled");
 
 use core::fmt;

@@ -31,6 +31,15 @@ xiao-esp32c6 = [
     "static_cell",    
     "portable-atomic/critical-section",
 ]
+
+## Xiao ESP32-S3 Device Support
+xiao-esp32s3 = [
+    "esp-hal/esp32s3",
+    "esp-rtos/esp32s3",
+    "esp-rtos/embassy",
+    "static_cell",        
+]
+
 ## uFerris Megalops Power Board Extension Support
 power-board = []
 ## embassy Support Feature Flag
