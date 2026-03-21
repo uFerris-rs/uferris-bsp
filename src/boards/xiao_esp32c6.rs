@@ -190,7 +190,7 @@ pub fn uferris_init(peripherals: Peripherals) -> UferrisEsp32 {
         let spi_bus_ref = SPI_BUS.init(RefCell::new(spi));
 
         // CS Pin
-        let sd_cs = Output::new(peripherals.17, Level::High, OutputConfig::default());
+        let sd_cs = Output::new(peripherals.GPIO17, Level::High, OutputConfig::default());
 
         // Create Delay Instance
         let delay = Delay::new();
