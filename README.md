@@ -50,10 +50,10 @@ Although there is an `embassy` feature flag, async support is not implemented fo
 | Controller       | Feature flag          | Support Status | `async` Support |
 |------------------|-----------------------|----------------|-----------------|
 | Xiao ESP32-C3    | `xiao-esp32c3`        | ✅             | ❌              |
-| Xiao ESP32-C5     | -                     | ❌             | ❌              |
-| Xiao ESP32-C6     | -                     | ❌             | ❌              |
-| Xiao ESP32-S3     | -                     | ❌             | ❌              |
-| Xiao ESP32-S3 Sense | -                   | ❌             | ❌              |
+| Xiao ESP32-C5     | -                    | ❌             | ❌              |
+| Xiao ESP32-C6     | `xiao-esp32c6`       | ✅             | ❌              |
+| Xiao ESP32-S3     | `xiao-esp32s3`       | ✅             | ❌              |
+| Xiao ESP32-S3 Sense | `xiao-esp32s3`     | ✅             | ❌              |
 | Xiao nRF52840    | -                     | ❌             | ❌              |
 | Xiao nRF52840 Sense | -                  | ❌             | ❌              |
 | Xiao nRF54L15    | -                     | ❌             | ❌              |
