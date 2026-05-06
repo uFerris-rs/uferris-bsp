@@ -23,11 +23,13 @@
 
 </div>
 
-**uFerris** is a Rust embedded learning/experimentation kit that can accept various **Seeed Studio Xiao** controllers.
+**uFerris** is a Rust embedded learning/experimentation kit that can accept various **[Seeed Studio Xiao](seeedstudio.com/xiao-series-page)** controllers.
 
 The `uferris-bsp` crate provides a **generic Board Support Package** that aims to be mostly MCU-agnostic, allowing the same high-level board API to work across different supported Xiao controllers (ESP32-C3, RP2040, etc.).
 
 Controller-specific support is enabled via **feature flags**.
+
+uFerris is an open-source hardware project. The hardware source is available on the **[uferris-hw](https://github.com/uFerris-rs/uferris-hw)** repo. uFerris can also be acquired from **[The Embedded Rustacean Store](http://shop.theembeddedrustacean.com/)**.
 
 ## Architecture Overview
 
