@@ -20,7 +20,7 @@ const CONFIG_PORT0: u8 = 0x8C;
 // 0 = Output, 1 = Input
 const PORT0_DIR: u8 = 0xFF; // All inputs
 const PORT1_DIR: u8 = 0xC0; // All outputs except P17 and P16
-const PORT2_DIR: u8 = 0x00; // All outputs 
+const PORT2_DIR: u8 = 0x00; // All outputs
 
 // ------------------------------------------
 // Enums
@@ -203,6 +203,8 @@ impl<I2C: I2c> IoExpander<I2C> {
         digit: SevenSegDigit,
         value: Option<u8>,
     ) -> Result<(), I2C::Error> {
+        // 0. Reset Port 0 to None
+        self.write_register(OUT_PORT2, 0x00).unwrap();
         // 1. Activate the Specified Digit (Port 1)
         let digit_bits = match digit {
             SevenSegDigit::Digit1 => IoExpPort1::Digit1.bits(),

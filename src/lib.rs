@@ -69,7 +69,12 @@
 //! ```
 //!
 
-#[cfg(not(any(feature = "xiao-esp32c3", feature = "xiao-esp32c6", feature = "xiao-esp32s3")))]
+#[cfg(not(any(
+    feature = "xiao-esp32c3",
+    feature = "xiao-esp32c6",
+    feature = "xiao-esp32s3",
+    feature = "xiao-nrf52840"
+)))]
 compile_error!("At least one Xiao device feature must be enabled");
 
 use core::fmt;
@@ -98,6 +103,8 @@ pub use boards::xiao_esp32c3::uferris_init;
 pub use boards::xiao_esp32c6::uferris_init;
 #[cfg(feature = "xiao-esp32s3")]
 pub use boards::xiao_esp32s3::uferris_init;
+#[cfg(feature = "xiao-nrf52840")]
+pub use boards::xiao_nrf52840::uferris_init;
 
 // ------------------------------------------
 // Feature-Gated Trait Alias
@@ -356,18 +363,24 @@ where
     /// Read the System Current in microAmps
     #[cfg(feature = "power-board")]
     pub fn read_system_current(&mut self) -> Option<i64> {
-        match self.power_monitor.next_measurement() {
-            Ok(measurement) => measurement.map(|value| value.current.0),
-            Err(_) => None,
+        loop {
+            match self.power_monitor.next_measurement() {
+                Ok(Some(measurement)) => return Some(measurement.current.0),
+                Ok(None) => continue,
+                Err(_) => return None,
+            }
         }
     }
 
-    /// Read the System Power in milliWatts
+    /// Read the System Power in microWatts
     #[cfg(feature = "power-board")]
     pub fn read_system_power(&mut self) -> Option<i64> {
-        match self.power_monitor.next_measurement() {
-            Ok(measurement) => measurement.map(|value| value.power.0),
-            Err(_) => None,
+        loop {
+            match self.power_monitor.next_measurement() {
+                Ok(Some(measurement)) => return Some(measurement.power.0),
+                Ok(None) => continue,
+                Err(_) => return None,
+            }
         }
     }
 
