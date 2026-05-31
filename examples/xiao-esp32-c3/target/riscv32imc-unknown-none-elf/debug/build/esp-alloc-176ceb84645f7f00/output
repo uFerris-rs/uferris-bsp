@@ -1,0 +1,8 @@
+cargo:rerun-if-changed=./esp_config.yml
+cargo:rerun-if-changed=build.rs
+cargo:rustc-env=ESP_ALLOC_CONFIG_HEAP_ALGORITHM=LLFF
+cargo:rerun-if-env-changed=ESP_ALLOC_CONFIG_HEAP_ALGORITHM
+cargo:rustc-check-cfg=cfg(heap_algorithm)
+cargo:rustc-check-cfg=cfg(heap_algorithm_llff)
+cargo:rustc-check-cfg=cfg(heap_algorithm_tlsf)
+cargo:rustc-cfg=heap_algorithm_llff

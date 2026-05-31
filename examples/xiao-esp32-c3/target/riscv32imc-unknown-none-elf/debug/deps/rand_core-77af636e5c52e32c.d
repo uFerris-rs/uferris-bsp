@@ -1,0 +1,10 @@
+/Users/omarhiari/Documents/GitHub/uferris-bsp/examples/xiao-esp32-c3/target/riscv32imc-unknown-none-elf/debug/deps/rand_core-77af636e5c52e32c.d: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/lib.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/block.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/impls.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/le.rs
+
+/Users/omarhiari/Documents/GitHub/uferris-bsp/examples/xiao-esp32-c3/target/riscv32imc-unknown-none-elf/debug/deps/librand_core-77af636e5c52e32c.rlib: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/lib.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/block.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/impls.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/le.rs
+
+/Users/omarhiari/Documents/GitHub/uferris-bsp/examples/xiao-esp32-c3/target/riscv32imc-unknown-none-elf/debug/deps/librand_core-77af636e5c52e32c.rmeta: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/lib.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/block.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/impls.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/le.rs
+
+/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/lib.rs:
+/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/block.rs:
+/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/impls.rs:
+/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.9.5/src/le.rs:

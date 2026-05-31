@@ -6,21 +6,21 @@ version = "0.1.0"
 publish = false
 
 [dependencies]
-esp-hal = { version = "~1.0", features = ["esp32c3", "unstable"] }
+esp-hal = { version = "~1.1", features = ["esp32c3", "unstable"] }
 
-esp-rtos = { version = "0.2.0", features = ["embassy", "esp-alloc", "esp32c3"] }
+esp-rtos = { version = "0.3.0", features = ["embassy", "esp-alloc", "esp32c3"] }
 
-esp-bootloader-esp-idf = { version = "0.4.0", features = ["esp32c3"] }
+esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c3"] }
 
-embassy-executor = { version = "0.9.1", features = [] }
+embassy-executor = { version = "0.10.0", features = [] }
 embassy-time = "0.5.0"
-esp-alloc = "0.9.0"
-esp-backtrace = { version = "0.18.1", features = [
+esp-alloc = "0.10.0"
+esp-backtrace = { version = "0.19.0", features = [
   "esp32c3",
   "panic-handler",
   "println",
 ] }
-esp-println = { version = "0.16.1", features = ["esp32c3"] }
+esp-println = { version = "0.17.0", features = ["esp32c3"] }
 
 critical-section = "1.2.0"
 static_cell = "2.1.1"

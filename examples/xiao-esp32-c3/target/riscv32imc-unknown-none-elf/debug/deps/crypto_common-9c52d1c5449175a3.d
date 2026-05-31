@@ -1,0 +1,7 @@
+/Users/omarhiari/Documents/GitHub/uferris-bsp/examples/xiao-esp32-c3/target/riscv32imc-unknown-none-elf/debug/deps/crypto_common-9c52d1c5449175a3.d: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crypto-common-0.1.7/src/lib.rs
+
+/Users/omarhiari/Documents/GitHub/uferris-bsp/examples/xiao-esp32-c3/target/riscv32imc-unknown-none-elf/debug/deps/libcrypto_common-9c52d1c5449175a3.rlib: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crypto-common-0.1.7/src/lib.rs
+
+/Users/omarhiari/Documents/GitHub/uferris-bsp/examples/xiao-esp32-c3/target/riscv32imc-unknown-none-elf/debug/deps/libcrypto_common-9c52d1c5449175a3.rmeta: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crypto-common-0.1.7/src/lib.rs
+
+/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crypto-common-0.1.7/src/lib.rs:
