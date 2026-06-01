@@ -16,4 +16,4 @@ embassy-nrf = { version = "0.10.0", features = ["nrf52840", "gpiote", "time-driv
 embassy-sync = "0.8.0"
 embassy-time = { version = "0.5.1" }
 panic-halt = "1.0.0"
-uferris-bsp = { path = "../..", features = ["xiao-nrf52840"] }
+uferris-bsp = { path = "../..", features = ["xiao-nrf52840", "power-board"] }

@@ -1,7 +1,0 @@
-/.vscode
-/.embuild
-/target
-/Cargo.lock
-/.DS_Store
-.DS_Store
-./zed
