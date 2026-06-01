@@ -32,9 +32,11 @@
 //!
 //! ## Currently Supported Xiaos:
 //! - Xiao ESP32-C3
+//! - Xiao ESP32-C6
+//! - Xiao ESP32-S3
 //!
 //! ## `async` Support
-//! This crate does not support `async` yet. Support would entail adding board `async` method calls for the different functions in `lib.rs`.
+//! Although there is an embassy feature, This crate does not support `async` yet. Support would entail adding board `async` method calls for the different functions in `lib.rs`.
 //!
 //! ## Contributing to the uFerris BSP - Adding a New Xiao Board Support:
 //! Adding support for a new Xiao board entails two parts:
