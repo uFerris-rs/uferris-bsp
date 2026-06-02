@@ -1,2 +1,0 @@
-cargo:rustc-link-arg=--error-handling-script=/Users/omarhiari/Documents/ErGitHub/uferris-bsp/examples/xiao-esp32-c3/target/release/build/xiao-esp32c3-examples-53ff138257b1c5db/build-script-build
-cargo:rustc-link-arg=-Tlinkall.x

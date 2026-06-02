@@ -1,9 +1,0 @@
-/Users/omarhiari/Documents/ErGitHub/uferris-bsp/examples/xiao-esp32-c3/target/riscv32imc-unknown-none-elf/release/deps/embassy_time_driver-5b99ff26b924175d.d: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/lib.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/tick.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/../README.md
-
-/Users/omarhiari/Documents/ErGitHub/uferris-bsp/examples/xiao-esp32-c3/target/riscv32imc-unknown-none-elf/release/deps/libembassy_time_driver-5b99ff26b924175d.rlib: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/lib.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/tick.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/../README.md
-
-/Users/omarhiari/Documents/ErGitHub/uferris-bsp/examples/xiao-esp32-c3/target/riscv32imc-unknown-none-elf/release/deps/libembassy_time_driver-5b99ff26b924175d.rmeta: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/lib.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/tick.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/../README.md
-
-/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/lib.rs:
-/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/tick.rs:
-/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-driver-0.2.2/src/../README.md:

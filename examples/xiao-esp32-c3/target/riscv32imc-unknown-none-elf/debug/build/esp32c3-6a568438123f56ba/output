@@ -1,3 +1,0 @@
-cargo:rustc-link-search=/Users/omarhiari/Documents/GitHub/uferris-bsp/examples/xiao-esp32-c3/target/riscv32imc-unknown-none-elf/debug/build/esp32c3-6a568438123f56ba/out
-cargo:rerun-if-changed=device.x
-cargo:rerun-if-changed=build.rs

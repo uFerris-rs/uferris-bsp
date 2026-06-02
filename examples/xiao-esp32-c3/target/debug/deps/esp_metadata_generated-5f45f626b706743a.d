@@ -1,9 +1,0 @@
-/Users/omarhiari/Documents/GitHub/uferris-bsp/examples/xiao-esp32-c3/target/debug/deps/esp_metadata_generated-5f45f626b706743a.d: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/lib.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/_generated_esp32c3.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/_build_script_utils.rs
-
-/Users/omarhiari/Documents/GitHub/uferris-bsp/examples/xiao-esp32-c3/target/debug/deps/libesp_metadata_generated-5f45f626b706743a.rlib: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/lib.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/_generated_esp32c3.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/_build_script_utils.rs
-
-/Users/omarhiari/Documents/GitHub/uferris-bsp/examples/xiao-esp32-c3/target/debug/deps/libesp_metadata_generated-5f45f626b706743a.rmeta: /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/lib.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/_generated_esp32c3.rs /Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/_build_script_utils.rs
-
-/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/lib.rs:
-/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/_generated_esp32c3.rs:
-/Users/omarhiari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-metadata-generated-0.4.0/src/_build_script_utils.rs:
