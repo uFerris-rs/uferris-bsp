@@ -10,6 +10,9 @@ categories = ["embedded"]
 readme = "README.md"
 homepage = "https://theembeddedrustacean.com/"
 exclude = ["target/debug/*", "assets/*"]
+autobenches = false
+autotests = false
+autobins = false
 
 [features]
 #! ⚠️ At least one Xiao device feature must be enabled when building the crate.
@@ -41,6 +44,16 @@ xiao-esp32s3 = [
     "static_cell",
 ]
 
+## Xiao NRF52840 Device Support
+xiao-nrf52840 = [
+    "embassy-nrf",
+    "panic-halt",
+    "static_cell",
+    "cortex-m",
+    "cortex-m-rt",
+    "embassy-futures"
+]
+
 ## uFerris Megalops Power Board Extension Support
 power-board = []
 ## embassy Support Feature Flag
@@ -48,6 +61,8 @@ embassy = []
 
 
 [dependencies]
+cortex-m-rt = { version = "0.7.5", optional = true }
+cortex-m = { version = "0.7.7", optional = true }
 esp-rtos = { version = "0.3.0", optional = true }
 embedded-hal = "1.0.0"
 embedded-hal-bus = "0.3.0"
@@ -57,9 +72,12 @@ ina219 = "0.2.0"
 embedded-sdmmc = "0.9.0"
 document-features = "0.2.11"
 static_cell = { version = "2.1.1", optional = true }
+portable-atomic = { version = "1.13.1", optional = true }
+panic-halt = { version = "1.0.0", optional = true }
+embassy-futures = { version = "0.1.2", optional = true }
 # Device HALs
 esp-hal = { version = "~1.1", optional = true, features = ["unstable"] }
-portable-atomic = { version = "1.13.1", optional = true }
+embassy-nrf = { version = "0.10.0", features = ["nrf52840", "time-driver-rtc1", "unstable-pac"], optional = true }
 
 
 [package.metadata.docs.rs]

@@ -1,0 +1,19 @@
+# This file was automatically generated.
+
+[package]
+edition = "2024"
+name = "xiao-nrf52840"
+version = "0.1.0"
+autobenches = false
+autotests = false
+
+[dependencies]
+cortex-m = { version = "0.7.7", features = ["inline-asm", "critical-section-single-core"] }
+cortex-m-rt = "0.7.5"
+embassy-executor = { version = "0.10.0", features = ["platform-cortex-m", "executor-thread"] }
+embassy-futures = "0.1.2"
+embassy-nrf = { version = "0.10.0", features = ["nrf52840", "gpiote", "time-driver-rtc1"] }
+embassy-sync = "0.8.0"
+embassy-time = { version = "0.5.1" }
+panic-halt = "1.0.0"
+uferris-bsp = { path = "../..", features = ["xiao-nrf52840", "power-board"] }
