@@ -25,7 +25,7 @@ esp-println = { version = "0.17.0", features = ["esp32c3"] }
 critical-section = "1.2.0"
 static_cell = "2.1.1"
 
-uferris-bsp = { path = "../..", features = ["xiao-esp32c3"] }
+uferris-bsp = { path = "../..", features = ["xiao-esp32c3", "embassy"] }
 
 
 [[bin]]
@@ -45,7 +45,6 @@ required-features = ["power-board"]
 
 [features]
 power-board = ["uferris-bsp/power-board"]
-async = ["uferris-bsp/embassy"]
 
 [profile.dev]
 # Rust debug is too slow.

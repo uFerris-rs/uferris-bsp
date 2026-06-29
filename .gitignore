@@ -1,8 +1,8 @@
-/.vscode
-/.embuild
-/target
-/Cargo.lock
-/.DS_Store
+**/.vscode
+**/.embuild
+**/target
+**/Cargo.lock
+**/.DS_Store
 .DS_Store
 
 NOTES.md
