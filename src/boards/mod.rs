@@ -4,3 +4,5 @@ pub mod xiao_esp32c3;
 pub mod xiao_esp32c6;
 #[cfg(feature = "xiao-esp32s3")]
 pub mod xiao_esp32s3;
+#[cfg(feature = "xiao-nrf52840")]
+pub mod xiao_nrf52840;
