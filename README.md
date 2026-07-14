@@ -51,19 +51,19 @@ Although there is an `embassy` feature flag, async support is not implemented fo
 
 | Controller       | Feature flag          | Support Status | `async` Support |
 |------------------|-----------------------|----------------|-----------------|
-| Xiao ESP32-C3    | `xiao-esp32c3`        | ✅             | ❌              |
-| Xiao ESP32-C5     | -                    | ❌             | ❌              |
-| Xiao ESP32-C6     | `xiao-esp32c6`       | ✅             | ❌              |
-| Xiao ESP32-S3     | `xiao-esp32s3`       | ✅             | ❌              |
-| Xiao ESP32-S3 Sense | `xiao-esp32s3`     | ✅             | ❌              |
-| Xiao nRF52840    | -                     | ❌             | ❌              |
-| Xiao nRF52840 Sense | -                  | ❌             | ❌              |
-| Xiao nRF54L15    | -                     | ❌             | ❌              |
-| Xiao nRF54L15 Sense | -                  | ❌             | ❌              |
-| Xiao RP2350      | -                     | ❌             | ❌              |
-| Xiao RP2040      | -                     | ❌             | ❌              |
-| Xiao SAMD21      | -                     | ❌             | ❌              |
-| Xiao RA4M1       | -                     | ❌             | ❌              |
+| [Xiao ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | `xiao-esp32c3`        | ✅             | ❌              |
+| [Xiao ESP32-C5](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C5-p-6609.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | -                    | ❌             | ❌              |
+| [Xiao ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | `xiao-esp32c6`       | ✅             | ❌              |
+| [Xiao ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | `xiao-esp32s3`       | ✅             | ❌              |
+| [Xiao ESP32-S3 Sense](https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-esp32s3`     | ✅             | ❌              |
+| [Xiao nRF52840](https://www.seeedstudio.com/Seeed-XIAO-BLE-nRF52840-p-5201.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | -                     | ❌             | ❌              |
+| [Xiao nRF52840 Sense](https://www.seeedstudio.com/Seeed-XIAO-BLE-Sense-nRF52840-p-5253.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | -                  | ❌             | ❌              |
+| [Xiao nRF54L15](https://www.seeedstudio.com/XIAO-nRF54L15-p-6493.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | -                     | ❌             | ❌              |
+| [Xiao nRF54L15 Sense](https://www.seeedstudio.com/XIAO-nRF54L15-Sense-p-6494.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | -                  | ❌             | ❌              |
+| [Xiao RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | -                     | ❌             | ❌              |
+| [Xiao RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | -                     | ❌             | ❌              |
+| [Xiao SAMD21](https://www.seeedstudio.com/Seeeduino-XIAO-Arduino-Microcontroller-SAMD21-Cortex-M0+-p-4426.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | -                     | ❌             | ❌              |
+| [Xiao RA4M1](https://www.seeedstudio.com/Seeed-XIAO-RA4M1-p-5943.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)       | -                     | ❌             | ❌              |
 | Xiao MG24        | -                     | ❌             | ❌              |
 | Xiao MG24 Sense  | -                     | ❌             | ❌              |
 
@@ -115,12 +115,22 @@ fn main() -> ! {
 }
 ```
 
+## Examples
+Each supported board has a self-contained example project under [`examples/`](examples/).
+Each board directory is a self-contained Cargo project with its own target, toolchain, and runner configuration.
+See each board's README for the full list of examples it supports.
+
+| Board | Examples |
+| ----- | -------- |
+| Xiao ESP32-C3 | [`examples/xiao-esp32c3/`](examples/xiao-esp32c3/) |
+| Xiao ESP32-C6 | [`examples/xiao-esp32-c6/`](examples/xiao-esp32-c6/) |
+
 
 ## Running Examples
 
-Examples live in the `examples/` directory, grouped by Xiao board. Each board directory is a self-contained Cargo project with its own target, toolchain, and runner configuration, so you build and run from inside it:
+Run any example with:
 
-```bash
+```
 cd examples/<board>
 cargo run --bin <example>
 ```
@@ -128,7 +138,7 @@ cargo run --bin <example>
 For example, to run `blinky.rs` on a Xiao ESP32-C3:
 
 ```bash
-cd examples/xiao-esp32c3
+cd examples/xiao-esp32-c3
 cargo run --bin blinky
 ```
 

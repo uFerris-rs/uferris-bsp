@@ -1,0 +1,61 @@
+[package]
+edition = "2024"
+name = "xiao-esp32c6-examples"
+rust-version = "1.88"
+version = "0.1.0"
+publish = false
+
+[dependencies]
+esp-hal = { version = "~1.1", features = ["esp32c6", "unstable"] }
+
+esp-rtos = { version = "0.3.0", features = ["embassy", "esp-alloc", "esp32c6"] }
+
+esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c6"] }
+
+embassy-executor = { version = "0.10.0", features = [] }
+embassy-time = "0.5.0"
+esp-alloc = "0.10.0"
+esp-backtrace = { version = "0.19.0", features = [
+  "esp32c6",
+  "panic-handler",
+  "println",
+] }
+esp-println = { version = "0.17.0", features = ["esp32c6"] }
+
+critical-section = "1.2.0"
+static_cell = "2.1.1"
+
+uferris-bsp = { path = "../..", features = ["xiao-esp32c6", "embassy"] }
+
+
+[[bin]]
+name = "blinky"
+path = "src/bin/blinky.rs"
+
+
+[[bin]]
+name = "baseboard_demo"
+path = "src/bin/baseboard_demo.rs"
+
+[[bin]]
+name = "full_board_demo"
+path = "src/bin/full_board_demo.rs"
+required-features = ["power-board"]
+
+
+[features]
+power-board = ["uferris-bsp/power-board"]
+
+[profile.dev]
+# Rust debug is too slow.
+# For debug builds always builds with some optimization
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1        # LLVM can perform better optimizations using a single thread
+debug = 2
+debug-assertions = false
+incremental = false
+lto = 'fat'
+opt-level = 's'
+overflow-checks = false
