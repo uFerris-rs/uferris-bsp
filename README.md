@@ -3,14 +3,14 @@
   <br/>
 </p>
 
-<h1 align="center">uFerris Board Support Package</h1>
+<h1 align="center">µFerris Board Support Package</h1>
 
 <p align="center">
-  <strong>A flexible, hardware-agnostic BSP crate for the uFerris Xiao carrier board</strong>
+  <strong>A flexible, hardware-agnostic BSP crate for the µFerris Xiao carrier board</strong>
 </p>
 
 <p align="center">
-  <img src="https://i.imgur.com/KcvXhPw.png" width="250" alt="uFerris board photo"/>
+  <img src="https://i.imgur.com/KcvXhPw.png" width="250" alt="µFerris board photo"/>
 </p>
 
 <br/>
@@ -23,25 +23,25 @@
 
 </div>
 
-**uFerris** is a Rust embedded learning/experimentation kit that can accept various **[Seeed Studio Xiao](seeedstudio.com/xiao-series-page)** controllers.
+**µFerris** is a Rust embedded learning/experimentation kit that can accept various **[Seeed Studio Xiao](seeedstudio.com/xiao-series-page)** controllers.
 
 The `uferris-bsp` crate provides a **generic Board Support Package** that aims to be mostly MCU-agnostic, allowing the same high-level board API to work across different supported Xiao controllers (ESP32-C3, RP2040, etc.).
 
 Controller-specific support is enabled via **feature flags**.
 
-uFerris is an open-source hardware project. The hardware source is available on the **[uferris-hw](https://github.com/uFerris-rs/uferris-hw)** repo. uFerris can also be acquired from **[The Embedded Rustacean Store](http://shop.theembeddedrustacean.com/)**.
+µFerris is an open-source hardware project. The hardware source is available on the **[uferris-hw](https://github.com/uFerris-rs/uferris-hw)** repo. µFerris can also be acquired from **[The Embedded Rustacean Store](http://shop.theembeddedrustacean.com/)**.
 
 ## Architecture Overview
 
 The crate adopts the following layered approach:
 
 <p align="center">
-  <img src="https://i.imgur.com/SD77pGl.png" width="520" alt="uFerris BSP architecture diagram"/>
+  <img src="https://i.imgur.com/SD77pGl.png" width="520" alt="µFerris BSP architecture diagram"/>
 </p>
 
 The architechture adds two layers on top of existing community crates:
-- **uFerris Board Logic Layer**: This layer implments the hardware-agnostic uFerris board API. 
-- **uFerris Board Adapter Layer**: This layer maps the generic logic to concrete MCU HALs (uses `embedded-hal` traits where possible).
+- **µFerris Board Logic Layer**: This layer implments the hardware-agnostic µFerris board API. 
+- **µFerris Board Adapter Layer**: This layer maps the generic logic to concrete MCU HALs (uses `embedded-hal` traits where possible).
 
 ## `async` Support
 
@@ -82,7 +82,7 @@ The rest of the crate files should not need to change.
 Available Cargo features:
 
 - `xiao-esp32c3` — Xiao ESP32-C3 Device Support
-- `powerboard` — uFerris Megalops Power Board Extension Support
+- `powerboard` — µFerris Megalops Power Board Extension Support
 - `embassy` — embassy Support Feature Flag
 
 ## Quick Start / Usage
@@ -105,7 +105,7 @@ fn main() -> ! {
     // 1. Get your HAL peripherals (depends on MCU)
     let peripherals = your_hal::take().unwrap();
 
-    // 2. Initialize the uFerris board abstraction
+    // 2. Initialize the µFerris board abstraction
     let mut uferris = uferris_init(peripherals).unwrap();
 
     // 3. Use the board API
