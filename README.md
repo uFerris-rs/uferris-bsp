@@ -50,7 +50,7 @@ Although there is an `embassy` feature flag, async support is not implemented fo
 ## Support Status
 
 | Controller       | Feature flag          | Support Status | `async` Support |
-|------------------|-----------------------|----------------|-----------------|
+|------------------|-----------------------|:----------------:|:-----------------:|
 | [Xiao ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | `xiao-esp32c3`        | ✅             | ❌              |
 | [Xiao ESP32-C5](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C5-p-6609.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | -                    | ❌             | ❌              |
 | [Xiao ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | `xiao-esp32c6`       | ✅             | ❌              |
