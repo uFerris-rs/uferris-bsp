@@ -122,7 +122,7 @@ See each board's README for the full list of examples it supports.
 
 | Board | Examples |
 | ----- | -------- |
-| Xiao ESP32-C3 | [`examples/xiao-esp32c3/`](examples/xiao-esp32c3/) |
+| Xiao ESP32-C3 | [`examples/xiao-esp32-c3/`](examples/xiao-esp32-c3/) |
 | Xiao ESP32-C6 | [`examples/xiao-esp32-c6/`](examples/xiao-esp32-c6/) |
 
 
