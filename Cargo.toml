@@ -18,17 +18,15 @@ default = []
 ## Xiao ESP32-C3 Device Support
 xiao-esp32c3 = [
     "esp-hal/esp32c3",
-    "esp-rtos/esp-alloc",
-    "esp-rtos/esp32c3",
-    "esp-rtos/embassy",
+    "esp-rtos?/esp-alloc",
+    "esp-rtos?/esp32c3",
     "static_cell",
 
 ]
 ## Xiao ESP32-C6 Device Support
 xiao-esp32c6 = [
     "esp-hal/esp32c6",
-    "esp-rtos/esp32c6",
-    "esp-rtos/embassy",
+    "esp-rtos?/esp32c6",
     "static_cell",
     "portable-atomic/critical-section",
 ]
@@ -36,15 +34,15 @@ xiao-esp32c6 = [
 ## Xiao ESP32-S3 Device Support
 xiao-esp32s3 = [
     "esp-hal/esp32s3",
-    "esp-rtos/esp32s3",
-    "esp-rtos/embassy",
+    "esp-rtos?/esp32s3",
     "static_cell",
 ]
 
 ## uFerris Megalops Power Board Extension Support
 power-board = []
-## embassy Support Feature Flag
-embassy = []
+## embassy Support Feature Flag. Pulls in `esp-rtos` and enables its embassy
+## scheduler/time-driver integration.
+embassy = ["dep:esp-rtos", "esp-rtos/embassy"]
 
 
 [dependencies]

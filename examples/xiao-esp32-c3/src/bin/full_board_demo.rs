@@ -7,10 +7,9 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-use embassy_executor::Spawner;
-use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
+use esp_hal::delay::Delay;
 use esp_println::println;
 use uferris_bsp::{SevenSegDigit, uferris_init};
 
@@ -24,8 +23,8 @@ esp_bootloader_esp_idf::esp_app_desc!();
     clippy::large_stack_frames,
     reason = "it's not unusual to allocate larger buffers etc. in main"
 )]
-#[esp_rtos::main]
-async fn main(_spawner: Spawner) -> ! {
+#[esp_hal::main]
+fn main() -> ! {
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 
@@ -33,8 +32,10 @@ async fn main(_spawner: Spawner) -> ! {
 
     let mut uferris = uferris_init(peripherals);
 
+    let delay = Delay::new();
+
     // A Constant to Control the Speed of the test/Demo Loop
-    const TEST_DELAY_MS: u64 = 200;
+    const TEST_DELAY_MS: u32 = 200;
 
     // Set RTC to Known Time for Testing
     uferris.set_rtc_time(2026, 1, 29, 9, 16, 0).unwrap();
@@ -50,22 +51,22 @@ async fn main(_spawner: Spawner) -> ! {
             datetime.3, datetime.4, datetime.5, datetime.2, datetime.1, datetime.0
         );
         uferris.led1_on();
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris.led1_off();
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris.led2_on().unwrap();
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris.led2_off().unwrap();
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris.led3_on().unwrap();
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris.led3_off().unwrap();
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         // ---------------------------------------
         // Seven Segment Tests
@@ -81,51 +82,51 @@ async fn main(_spawner: Spawner) -> ! {
             .write_seven_segment_digit(SevenSegDigit::Digit1, Some(8))
             .unwrap();
 
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris
             .write_seven_segment_digit(SevenSegDigit::Digit1, None)
             .unwrap();
 
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris
             .write_seven_segment_digit(SevenSegDigit::Digit2, Some(8))
             .unwrap();
 
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris
             .write_seven_segment_digit(SevenSegDigit::Digit2, None)
             .unwrap();
 
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris.seven_segment_display_colon_en(true).unwrap();
 
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris.seven_segment_display_colon_en(false).unwrap();
 
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris
             .write_seven_segment_digit(SevenSegDigit::Digit3, Some(8))
             .unwrap();
 
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris
             .write_seven_segment_digit(SevenSegDigit::Digit3, None)
             .unwrap();
 
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris
             .write_seven_segment_digit(SevenSegDigit::Digit4, Some(8))
             .unwrap();
 
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris
             .write_seven_segment_digit(SevenSegDigit::Digit4, None)
@@ -141,11 +142,11 @@ async fn main(_spawner: Spawner) -> ! {
             datetime.2, datetime.1, datetime.0, datetime.5, datetime.4, datetime.3
         );
 
-        Timer::after(Duration::from_millis(TEST_DELAY_MS)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris.buzz_on(1024);
 
-        Timer::after(Duration::from_millis(2000)).await;
+        delay.delay_millis(2000);
 
         uferris.buzz_off();
 
@@ -162,11 +163,11 @@ async fn main(_spawner: Spawner) -> ! {
         let ldr_value = uferris.read_ldr();
         println!("First LDR Reading: {}", ldr_value);
         println!("Waiting 3 Seconds...");
-        Timer::after(Duration::from_millis(3000)).await;
+        delay.delay_millis(3000);
         let ldr_value = uferris.read_ldr();
         println!("Second LDR Reading: {}", ldr_value);
         println!("Waiting 3 Seconds...");
-        Timer::after(Duration::from_millis(3000)).await;
+        delay.delay_millis(3000);
         let ldr_value = uferris.read_ldr();
         println!("Third LDR Reading: {}", ldr_value);
         println!("LDR Reading Test Complete.");
@@ -220,7 +221,7 @@ async fn main(_spawner: Spawner) -> ! {
         println!("Slide Switch 6 State Changed");
         println!("Current Slide Switch 6 State: {:?}", new_sw6_state);
 
-        Timer::after(Duration::from_millis(2000)).await;
+        delay.delay_millis(2000);
 
         println!("Moving to Switch 7 (Right Switch)...");
         let current_sw7_state = uferris.read_sw7().unwrap();
@@ -232,7 +233,7 @@ async fn main(_spawner: Spawner) -> ! {
         }
         println!("Slide Switch 7 State Changed");
         println!("Current Slide Switch 7 State: {:?}", new_sw7_state);
-        Timer::after(Duration::from_millis(2000)).await;
+        delay.delay_millis(2000);
 
         // ---------------------------------------
         // Powerboard Testing

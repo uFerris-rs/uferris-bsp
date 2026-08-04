@@ -1,27 +1,27 @@
 [package]
 edition = "2024"
-name = "xiao-esp32c3-examples"
+name = "xiao-esp32s3-examples"
 rust-version = "1.88"
 version = "0.1.0"
 publish = false
 
 [dependencies]
-esp-hal = { version = "~1.1", features = ["esp32c3", "unstable"] }
+esp-hal = { version = "~1.1", features = ["esp32s3", "unstable"] }
 
-esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c3"] }
+esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32s3"] }
 
 esp-alloc = "0.10.0"
 esp-backtrace = { version = "0.19.0", features = [
-  "esp32c3",
+  "esp32s3",
   "panic-handler",
   "println",
 ] }
-esp-println = { version = "0.17.0", features = ["esp32c3"] }
+esp-println = { version = "0.17.0", features = ["esp32s3"] }
 
 critical-section = "1.2.0"
 static_cell = "2.1.1"
 
-uferris-bsp = { path = "../..", features = ["xiao-esp32c3"] }
+uferris-bsp = { path = "../..", features = ["xiao-esp32s3"] }
 
 
 [[bin]]

@@ -98,7 +98,9 @@ pub fn uferris_init(peripherals: Peripherals) -> UferrisEsp32 {
     #[cfg(feature = "embassy")]
     {
         let timg0 = TimerGroup::new(peripherals.TIMG0);
-        esp_rtos::start(timg0.timer0);
+        let sw_interrupt =
+            esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
+        esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
     }
 
     // --------------------------------------

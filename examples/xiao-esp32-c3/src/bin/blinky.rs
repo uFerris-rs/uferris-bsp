@@ -7,10 +7,9 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-use embassy_executor::Spawner;
-use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
+use esp_hal::delay::Delay;
 use uferris_bsp::uferris_init;
 
 extern crate alloc;
@@ -23,8 +22,8 @@ esp_bootloader_esp_idf::esp_app_desc!();
     clippy::large_stack_frames,
     reason = "it's not unusual to allocate larger buffers etc. in main"
 )]
-#[esp_rtos::main]
-async fn main(_spawner: Spawner) -> ! {
+#[esp_hal::main]
+fn main() -> ! {
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 
@@ -32,14 +31,16 @@ async fn main(_spawner: Spawner) -> ! {
 
     let mut uferris = uferris_init(peripherals);
 
+    let delay = Delay::new();
+
     // A Constant to Control the Speed of the test/Demo Loop
-    let delay: u64 = 200;
+    const TEST_DELAY_MS: u32 = 200;
 
     loop {
         uferris.led1_on();
-        Timer::after(Duration::from_millis(delay)).await;
+        delay.delay_millis(TEST_DELAY_MS);
 
         uferris.led1_off();
-        Timer::after(Duration::from_millis(delay)).await;
+        delay.delay_millis(TEST_DELAY_MS);
     }
 }
