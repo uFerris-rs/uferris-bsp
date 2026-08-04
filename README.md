@@ -52,7 +52,7 @@ Although there is an `embassy` feature flag, async support is not implemented fo
 | Controller       | Feature flag          | Support Status | `async` Support |
 |------------------|-----------------------|:----------------:|:-----------------:|
 | [Xiao ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | `xiao-esp32c3`        | ✅             | ❌              |
-| [Xiao ESP32-C5](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C5-p-6609.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | -                    | ❌             | ❌              |
+| [Xiao ESP32-C5](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C5-p-6609.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | `xiao-esp32c5`       | ✅ [^1]        | ❌              |
 | [Xiao ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | `xiao-esp32c6`       | ✅             | ❌              |
 | [Xiao ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | `xiao-esp32s3`       | ✅             | ❌              |
 | [Xiao ESP32-S3 Sense](https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-esp32s3`     | ✅             | ❌              |
@@ -66,6 +66,8 @@ Although there is an `embassy` feature flag, async support is not implemented fo
 | [Xiao RA4M1](https://www.seeedstudio.com/Seeed-XIAO-RA4M1-p-5943.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)       | -                     | ❌             | ❌              |
 | Xiao MG24        | -                     | ❌             | ❌              |
 | Xiao MG24 Sense  | -                     | ❌             | ❌              |
+
+[^1]: On the Xiao ESP32-C5 the buzzer is currently **stubbed and non-functional**. `esp-hal` does not yet provide a PWM (LEDC/MCPWM) driver for this chip, so the buzzer pin is only held low and `buzz_on`/`buzz_off` are accepted but do nothing. Every other baseboard peripheral works as usual.
 
 
 
@@ -82,6 +84,7 @@ The rest of the crate files should not need to change.
 Available Cargo features:
 
 - `xiao-esp32c3` — Xiao ESP32-C3 Device Support
+- `xiao-esp32c5` — Xiao ESP32-C5 Device Support
 - `powerboard` — µFerris Megalops Power Board Extension Support
 - `embassy` — embassy Support Feature Flag
 

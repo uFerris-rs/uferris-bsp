@@ -32,6 +32,7 @@
 //!
 //! ## Currently Supported Xiaos:
 //! - Xiao ESP32-C3
+//! - Xiao ESP32-C5 (buzzer stubbed - no PWM driver in `esp-hal` yet)
 //! - Xiao ESP32-C6
 //! - Xiao ESP32-S3
 //!
@@ -73,6 +74,7 @@
 
 #[cfg(not(any(
     feature = "xiao-esp32c3",
+    feature = "xiao-esp32c5",
     feature = "xiao-esp32c6",
     feature = "xiao-esp32s3"
 )))]
@@ -100,6 +102,8 @@ pub mod boards;
 pub use crate::components::io_expander::SevenSegDigit;
 #[cfg(feature = "xiao-esp32c3")]
 pub use boards::xiao_esp32c3::uferris_init;
+#[cfg(feature = "xiao-esp32c5")]
+pub use boards::xiao_esp32c5::uferris_init;
 #[cfg(feature = "xiao-esp32c6")]
 pub use boards::xiao_esp32c6::uferris_init;
 #[cfg(feature = "xiao-esp32s3")]
