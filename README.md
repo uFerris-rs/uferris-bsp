@@ -45,7 +45,7 @@ The architechture adds two layers on top of existing community crates:
 
 ## `async` Support
 
-Although there is an `embassy` feature flag, async support is not implemented for all devices. Adding async support would require implementing async versions of the main board methods (most likely using `embedded-hal-async` traits).
+Although there is an `async` feature flag, async support is not implemented yet. The flag currently only starts the `esp-rtos` embassy scheduler on ESP devices (it is not yet supported on other controllers). Adding full async support would require implementing async versions of the main board methods (most likely using `embedded-hal-async` traits), possibly backed by the embassy HALs used in either async or blocking mode.
 
 ## Support Status
 
@@ -61,7 +61,7 @@ Although there is an `embassy` feature flag, async support is not implemented fo
 | [Xiao nRF54L15](https://www.seeedstudio.com/XIAO-nRF54L15-p-6493.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | -                     | ❌             | ❌              |
 | [Xiao nRF54L15 Sense](https://www.seeedstudio.com/XIAO-nRF54L15-Sense-p-6494.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | -                  | ❌             | ❌              |
 | [Xiao RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | -                     | ❌             | ❌              |
-| [Xiao RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | -                     | ❌             | ❌              |
+| [Xiao RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | `xiao-rp2040`         | ✅             | ❌              |
 | [Xiao SAMD21](https://www.seeedstudio.com/Seeeduino-XIAO-Arduino-Microcontroller-SAMD21-Cortex-M0+-p-4426.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | -                     | ❌             | ❌              |
 | [Xiao RA4M1](https://www.seeedstudio.com/Seeed-XIAO-RA4M1-p-5943.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)       | -                     | ❌             | ❌              |
 | Xiao MG24        | -                     | ❌             | ❌              |
@@ -85,8 +85,9 @@ Available Cargo features:
 
 - `xiao-esp32c3` — Xiao ESP32-C3 Device Support
 - `xiao-esp32c5` — Xiao ESP32-C5 Device Support
+- `xiao-rp2040` — Xiao RP2040 Device Support
 - `powerboard` — µFerris Megalops Power Board Extension Support
-- `embassy` — embassy Support Feature Flag
+- `async` — `async` Support Feature Flag (currently ESP-only; starts the `esp-rtos` embassy scheduler)
 
 ## Quick Start / Usage
 Generally, you need to:

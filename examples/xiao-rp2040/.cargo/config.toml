@@ -1,0 +1,18 @@
+[target.thumbv6m-none-eabi]
+# Deploys the UF2 to a Xiao RP2040 in bootloader mode, then opens the serial
+# monitor on the USB CDC device the examples print to.
+runner = "elf2uf2-rs -d -s"
+
+[env]
+
+[build]
+rustflags = [
+  # Keep the flash image compact: do not page-align sections.
+  "-C",
+  "link-arg=--nmagic",
+  # The cortex-m-rt linker script.
+  "-C",
+  "link-arg=-Tlink.x",
+]
+
+target = "thumbv6m-none-eabi"

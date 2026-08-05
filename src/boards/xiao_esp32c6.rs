@@ -1,6 +1,6 @@
 use core::cell::RefCell;
 use embedded_hal_bus::i2c::RefCellDevice as I2cRefCellDevice;
-#[cfg(feature = "embassy")]
+#[cfg(feature = "async")]
 use esp_hal::timer::timg::TimerGroup;
 use esp_hal::{
     analog::adc::{Adc, AdcConfig, AdcPin, Attenuation},
@@ -95,7 +95,7 @@ pub fn uferris_init(peripherals: Peripherals) -> UferrisEsp32 {
     // --------------------------------------
     //            Embassy Setup
     // --------------------------------------
-    #[cfg(feature = "embassy")]
+    #[cfg(feature = "async")]
     {
         let timg0 = TimerGroup::new(peripherals.TIMG0);
         let sw_interrupt =
