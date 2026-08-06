@@ -4,14 +4,8 @@ MEMORY {
     RAM   : ORIGIN = 0x20000000, LENGTH = 256K
 }
 
-/* The second stage bootloader lives in the `uferris-bsp` crate. Referencing it
-   here forces the linker to pull it out of the rlib. */
-EXTERN(BOOT2);
-
-SECTIONS {
-    /* ### Boot loader */
-    .boot2 ORIGIN(BOOT2) :
-    {
-        KEEP(*(.boot2));
-    } > BOOT2
-} INSERT BEFORE .text;
+/* The second stage bootloader lives in `embassy-rp`, and the `.boot2` output
+   section that places it into the region above comes from `link-rp.x`, the
+   linker script fragment `embassy-rp` emits for the RP2040. This file only has
+   to carve out the region it is placed in; see `.cargo/config.toml` for where
+   the fragment is added to the link. */

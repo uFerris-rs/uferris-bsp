@@ -26,6 +26,11 @@ for a host either, so a demo starts as soon as the board is flashed. The button
 and slide switch phases still block until the matching control is operated, in
 the order buttons 1 through 5, then slide switch 6, then slide switch 7.
 
+If you have a debug probe wired to the SWD pads on the underside of the board,
+printing is available today over RTT with `probe-rs` and an RTT logger such as
+`defmt-rtt` — that is a change to your own application, not something these
+examples set up.
+
 ## Flashing
 
 `elf2uf2-rs` does not support the RP2350, so flashing goes through `picotool`:

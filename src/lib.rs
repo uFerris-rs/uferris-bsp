@@ -104,11 +104,6 @@ pub use components::io_expander::SwPos;
 // Export the specific board implementation based on features
 pub mod boards;
 
-// Export the USB CDC console for the controllers that need one. The board list
-// grows as backends are added under `console/`.
-#[cfg(all(feature = "usb-console", feature = "xiao-rp2040"))]
-pub mod console;
-
 // Re-exports
 pub use crate::components::io_expander::SevenSegDigit;
 #[cfg(feature = "xiao-esp32c3")]
@@ -125,8 +120,6 @@ pub use boards::xiao_nrf52840::uferris_init;
 pub use boards::xiao_rp2040::uferris_init;
 #[cfg(feature = "xiao-rp2350")]
 pub use boards::xiao_rp2350::uferris_init;
-#[cfg(all(feature = "usb-console", feature = "xiao-rp2040"))]
-pub use console::wait_for_host;
 
 // ------------------------------------------
 // Feature-Gated Trait Alias

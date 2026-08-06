@@ -1,34 +1,23 @@
-use core::cell::{Cell, RefCell};
-use critical_section::Mutex;
-use embedded_hal_bus::i2c::RefCellDevice as I2cRefCellDevice;
-use rp2040_hal::{
-    Sio, Watchdog,
-    adc::{Adc, AdcPin},
-    clocks::init_clocks_and_plls,
-    fugit::RateExtU32,
-    gpio::{
-        FunctionI2c, FunctionSio, Pin, Pins, PullDown, PullNone, PullUp, SioInput, SioOutput,
-        bank0::{Gpio6, Gpio7, Gpio26, Gpio27, Gpio29},
-    },
-    i2c::I2C,
-    pac::{I2C1, Peripherals},
-    pwm::{A, Channel, FreeRunning, Pwm6, Slice, Slices},
-    timer::Timer,
+use core::cell::RefCell;
+use embassy_rp::{
+    Peripherals,
+    adc::{Adc, Blocking as AdcBlocking, Channel as AdcChannel, Config as AdcConfig},
+    gpio::{Input, Level, Output, Pull},
+    i2c::{Blocking as I2cBlocking, Config as I2cConfig, I2c},
+    peripherals::I2C1,
+    pwm::{Config as PwmConfig, Pwm},
 };
+use embedded_hal::delay::DelayNs;
+use embedded_hal_bus::i2c::RefCellDevice as I2cRefCellDevice;
 use static_cell::StaticCell;
 
 #[cfg(feature = "power-board")]
-use embedded_hal_bus::spi::RefCellDevice as SpiRefCellDevice;
-#[cfg(feature = "power-board")]
-use rp2040_hal::{
-    Spi,
-    gpio::{
-        FunctionSpi,
-        bank0::{Gpio1, Gpio2, Gpio3, Gpio4},
-    },
-    pac::SPI0,
-    spi::Enabled,
+use embassy_rp::{
+    peripherals::SPI0,
+    spi::{Blocking as SpiBlocking, Config as SpiConfig, Spi},
 };
+#[cfg(feature = "power-board")]
+use embedded_hal_bus::spi::RefCellDevice as SpiRefCellDevice;
 
 use crate::Uferris;
 use crate::components::ldr::OneShot;
@@ -37,28 +26,35 @@ use crate::components::ldr::OneShot;
 // Second Stage Bootloader
 // ------------------------------------------
 
-/// The RP2040 has no internal flash. Its boot ROM copies the first 256 bytes of
-/// the external QSPI flash into SRAM and runs them, and that second stage is
-/// what configures the flash for XIP. The `.boot2` section is placed at the
-/// very start of flash by the application's `memory.x`.
-///
-/// The Xiao RP2040 carries a Winbond W25Q flash part, so `BOOT_LOADER_W25Q080`
-/// is the correct second stage. Providing it is the BSP's job, so applications
-/// do not have to depend on `rp2040-boot2` themselves.
-#[unsafe(link_section = ".boot2")]
-#[unsafe(no_mangle)]
-#[used]
-pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
+// The RP2040 has no internal flash. Its boot ROM copies the first 256 bytes of
+// the external QSPI flash into SRAM and runs them, and that second stage is
+// what configures the flash for XIP.
+//
+// `embassy-rp` supplies that stage itself: with the `rp2040` feature on and no
+// `boot2-*` feature selected it places `BOOT_LOADER_W25Q080` in `.boot2`, which
+// is the correct second stage for the Winbond W25Q class part the Xiao RP2040
+// carries. The BSP therefore declares no bootloader of its own, and the section
+// is placed by `link-rp.x`, the linker script fragment `embassy-rp` emits for
+// the RP2040. Applications add it to their rustflags alongside `link.x`.
 
 // ------------------------------------------
 // Board Constants
 // ------------------------------------------
 
-/// Crystal frequency fitted on the Xiao RP2040.
-const XOSC_CRYSTAL_FREQ_HZ: u32 = 12_000_000;
-
-/// System clock frequency produced by [`init_clocks_and_plls`].
+/// System clock frequency produced by [`embassy_rp::init`] with the default
+/// [`embassy_rp::config::Config`].
+///
+/// That configuration runs the system PLL off the 12 MHz crystal fitted on the
+/// Xiao RP2040 with `refdiv` 1, `fbdiv` 125 and post dividers 6 and 2, so
+/// `12 MHz * 125 / 12 = 125 MHz`, and the system clock divider is 1.
 const SYS_CLOCK_HZ: u32 = 125_000_000;
+
+/// I2C bus frequency shared by the io expander, the RTC and the power monitor.
+const I2C_FREQ_HZ: u32 = 100_000;
+
+/// SPI bus frequency used to talk to the SD card on the power board.
+#[cfg(feature = "power-board")]
+const SPI_FREQ_HZ: u32 = 400_000;
 
 // ------------------------------------------
 // Static Types
@@ -67,55 +63,46 @@ static I2C_BUS: StaticCell<RefCell<Rp2040I2c>> = StaticCell::new();
 #[cfg(feature = "power-board")]
 static SPI_BUS: StaticCell<RefCell<Rp2040Spi>> = StaticCell::new();
 
-/// Copy of the free running timer minted during board init, handed out by
-/// [`timer`].
-static TIMER: Mutex<Cell<Option<Timer>>> = Mutex::new(Cell::new(None));
-
 // ------------------------------------------
 // Type Defs
 // ------------------------------------------
 
 // I2C Types
-type I2cSdaPin = Pin<Gpio6, FunctionI2c, PullUp>;
-type I2cSclPin = Pin<Gpio7, FunctionI2c, PullUp>;
-type Rp2040I2c = I2C<I2C1, (I2cSdaPin, I2cSclPin)>;
+type Rp2040I2c = I2c<'static, I2C1, I2cBlocking>;
 type SharedI2c = I2cRefCellDevice<'static, Rp2040I2c>;
 
 // GPIO Types
-type LedPin = Pin<Gpio27, FunctionSio<SioOutput>, PullDown>;
-type ButtonPin = Pin<Gpio29, FunctionSio<SioInput>, PullNone>;
+type LedPin = Output<'static>;
+type ButtonPin = Input<'static>;
 
 // ADC Types
 pub struct LdrAdc {
-    adc: Adc,
-    pin: AdcPin<Pin<Gpio26, FunctionSio<SioInput>, PullNone>>,
+    adc: Adc<'static, AdcBlocking>,
+    channel: AdcChannel<'static>,
 }
 
 impl OneShot for LdrAdc {
+    /// `embassy-rp` surfaces the conversion errors the RP2040 ADC can report.
+    /// [`OneShot::read_raw`] has no error channel, so a failed conversion reads
+    /// as 0, the same value a saturated-dark LDR produces.
     fn read_raw(&mut self) -> u16 {
-        self.adc.read(&mut self.pin).unwrap_or(0)
+        self.adc.blocking_read(&mut self.channel).unwrap_or(0)
     }
 }
 
 // Buzzer Types
-pub type Rp2040BuzzerChannel = Channel<Slice<Pwm6, FreeRunning>, A>;
+pub type Rp2040BuzzerChannel = Pwm<'static>;
 
 // SD/SPI Types
 #[cfg(feature = "power-board")]
-type SpiSckPin = Pin<Gpio2, FunctionSpi, PullDown>;
-#[cfg(feature = "power-board")]
-type SpiTxPin = Pin<Gpio3, FunctionSpi, PullDown>;
-#[cfg(feature = "power-board")]
-type SpiRxPin = Pin<Gpio4, FunctionSpi, PullDown>;
-#[cfg(feature = "power-board")]
-type Rp2040Spi = Spi<Enabled, SPI0, (SpiTxPin, SpiRxPin, SpiSckPin)>;
+type Rp2040Spi = Spi<'static, SPI0, SpiBlocking>;
 
 #[cfg(feature = "power-board")]
-type SdCsPin = Pin<Gpio1, FunctionSio<SioOutput>, PullDown>;
+type SdCsPin = Output<'static>;
 
 #[cfg(feature = "power-board")]
 type SdBlockDevice =
-    embedded_sdmmc::SdCard<SpiRefCellDevice<'static, Rp2040Spi, SdCsPin, Timer>, Timer>;
+    embedded_sdmmc::SdCard<SpiRefCellDevice<'static, Rp2040Spi, SdCsPin, CycleDelay>, CycleDelay>;
 
 // ------------------------------------------
 // uFerris Board Type Alias
@@ -144,19 +131,38 @@ pub type UferrisRp2040 = Uferris<
 // Delay Provider
 // ------------------------------------------
 
-/// The board's free running 1 MHz timer, usable as an `embedded-hal` delay
-/// provider.
+/// A busy loop delay, usable as an `embedded-hal` delay provider.
 ///
-/// [`Timer`] is `Copy` and only ever reads the hardware counter, so every
-/// caller gets its own handle onto the same timer.
+/// `embassy-rp` only exposes the RP2040 timer through the `embassy-time`
+/// driver, which needs an executor to be useful, so the blocking board adapter
+/// counts CPU cycles instead. [`cortex_m::asm::delay`] runs one loop iteration
+/// per requested cycle and every iteration costs at least one cycle, so the
+/// requested time is a lower bound: on the Cortex-M0+ the loop takes about
+/// three cycles per iteration, and a delay can therefore run up to roughly
+/// three times long. That is the right side to err on for the SD card timings
+/// that need it, but it does mean the delays are coarse. An accurate timer
+/// backed delay arrives with `async` support, when `embassy-time` comes along
+/// anyway.
 ///
-/// # Panics
+/// The type is a zero sized `Copy` marker, so every caller gets its own handle
+/// and it can back both delay slots of a shared SPI device at once.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CycleDelay;
+
+impl DelayNs for CycleDelay {
+    fn delay_ns(&mut self, ns: u32) {
+        // `u32::MAX` ns at 125 MHz is about 5.4e8 cycles, so the count always
+        // fits back into the `u32` `asm::delay` takes.
+        let cycles = u64::from(ns) * u64::from(SYS_CLOCK_HZ) / 1_000_000_000;
+        cortex_m::asm::delay(cycles as u32);
+    }
+}
+
+/// A [`CycleDelay`] handle.
 ///
-/// Panics if the board has not been initialized yet. Call [`uferris_init`]
-/// first.
-pub fn timer() -> Timer {
-    critical_section::with(|cs| TIMER.borrow(cs).get())
-        .expect("uferris_init must be called before timer()")
+/// It needs no board state, so it is callable before [`uferris_init`].
+pub const fn delay() -> CycleDelay {
+    CycleDelay
 }
 
 // ------------------------------------------
@@ -165,60 +171,40 @@ pub fn timer() -> Timer {
 
 /// Initialize the uFerris board.
 ///
-/// With the `usb-console` feature enabled this also brings up the USB CDC
-/// console. Unlike the ESP32 Xiaos, the Xiao RP2040 has no USB-to-UART bridge,
-/// so applications print over a USB CDC device the RP2040 provides itself.
-/// Building one needs the USB controller *and* the `UsbClock` token minted
-/// while the clock tree is set up, neither of which is reachable once
-/// `Peripherals` has been moved in here, so the console is built from inside
-/// the initializer. Printing then goes through the crate's `println!` macro,
-/// and the device is serviced from `USBCTRL_IRQ` rather than by application
-/// code.
-pub fn uferris_init(mut peripherals: Peripherals) -> UferrisRp2040 {
-    // --------------------------------------
-    //             Clock Setup
-    // --------------------------------------
-    let mut watchdog = Watchdog::new(peripherals.WATCHDOG);
-    let clocks = init_clocks_and_plls(
-        XOSC_CRYSTAL_FREQ_HZ,
-        peripherals.XOSC,
-        peripherals.CLOCKS,
-        peripherals.PLL_SYS,
-        peripherals.PLL_USB,
-        &mut peripherals.RESETS,
-        &mut watchdog,
-    )
-    .ok()
-    .unwrap();
-
-    let sio = Sio::new(peripherals.SIO);
-    let pins = Pins::new(
-        peripherals.IO_BANK0,
-        peripherals.PADS_BANK0,
-        sio.gpio_bank0,
-        &mut peripherals.RESETS,
-    );
-
-    let timer = Timer::new(peripherals.TIMER, &mut peripherals.RESETS, &clocks);
-    critical_section::with(|cs| TIMER.borrow(cs).set(Some(timer)));
-
+/// `embassy-rp` is used in blocking mode: no executor, no time driver and no
+/// `async` anywhere. [`embassy_rp::init`] sets up the clock tree and hands back
+/// the peripheral singletons, and every driver built here is one of the
+/// crate's blocking constructors, all of which implement the `embedded-hal`
+/// 1.0 blocking traits the board logic is written against.
+///
+/// There is no console on this board yet. The Xiao RP2040 has no USB-to-UART
+/// bridge, so printing would mean driving a USB CDC device, and the
+/// `embassy-rp` USB driver is `async` only. Applications therefore run silent
+/// until `async` support lands.
+pub fn uferris_init(peripherals: Peripherals) -> UferrisRp2040 {
     // --------------------------------------
     //              ADC Setup
     // --------------------------------------
-    let adc = Adc::new(peripherals.ADC, &mut peripherals.RESETS);
-    let ldr_pin = AdcPin::new(pins.gpio26.into_floating_input()).unwrap();
-    let ldr_driver = LdrAdc { adc, pin: ldr_pin };
+    let adc = Adc::new_blocking(peripherals.ADC, AdcConfig::default());
+    // Floating, matching the other boards: the LDR sits in a divider on the
+    // uFerris carrier board, so no internal pull is configured here.
+    let ldr_channel = AdcChannel::new_pin(peripherals.PIN_26, Pull::None);
+    let ldr_driver = LdrAdc {
+        adc,
+        channel: ldr_channel,
+    };
 
     // --------------------------------------
     //              I2C Setup
     // --------------------------------------
-    let i2c = I2C::i2c1(
+    let mut i2c_config = I2cConfig::default();
+    i2c_config.frequency = I2C_FREQ_HZ;
+
+    let i2c = I2c::new_blocking(
         peripherals.I2C1,
-        pins.gpio6.reconfigure(),
-        pins.gpio7.reconfigure(),
-        100.kHz(),
-        &mut peripherals.RESETS,
-        SYS_CLOCK_HZ.Hz(),
+        peripherals.PIN_7,
+        peripherals.PIN_6,
+        i2c_config,
     );
 
     // Promote I2C Bus to Static
@@ -234,72 +220,70 @@ pub fn uferris_init(mut peripherals: Peripherals) -> UferrisRp2040 {
     // --------------------------------------
     //              GPIO Setup
     // --------------------------------------
-    let led = pins.gpio27.into_push_pull_output();
+    let led = Output::new(peripherals.PIN_27, Level::Low);
     // Floating input, matching the other boards: the button is wired active low
     // against a pull-up on the uFerris carrier board, so no internal pull is
     // configured here.
-    let button = pins.gpio29.into_floating_input();
+    let button = Input::new(peripherals.PIN_29, Pull::None);
 
     // --------------------------------------
     //              PWM Setup
     // --------------------------------------
-    let pwm_slices = Slices::new(peripherals.PWM, &mut peripherals.RESETS);
 
     // The buzzer sits on D2 / GPIO28, which is slice 6 channel A.
     //
     // The RP2040 PWM output frequency is
     //     f_pwm = f_sys / (DIV * (TOP + 1))
-    // where DIV is an 8.4 fixed point value (`div_int` + `div_frac` / 16).
+    // where DIV is an 8.4 fixed point value.
     //
-    // TOP is 16383 so that `max_duty_cycle()` reports 16384, i.e. the same
-    // 14-bit resolution the LEDC based boards use. Duty values written by
-    // application code therefore mean the same thing on every board.
+    // `embassy-rp` reports `max_duty_cycle()` as TOP rather than TOP + 1, so
+    // TOP is 16384 here to keep the 14 bit resolution the LEDC based boards
+    // use. Duty values written by application code therefore mean the same
+    // thing on every board.
     //
-    // Hitting the 2700 Hz used by the other boards then needs
-    //     DIV = 125_000_000 / (2700 * 16384) = 2.827
+    // The default clock configuration leaves the RP2040 system clock at
+    // 125 MHz, so hitting the 2700 Hz used by the other boards needs
+    //     DIV = 125_000_000 / (2700 * 16385) = 2.825
     // and the nearest representable value is 2 + 13/16 = 2.8125, giving
-    //     f_pwm = 125_000_000 / (2.8125 * 16384) = 2713 Hz.
-    let mut buzzer_slice = pwm_slices.pwm6;
-    buzzer_slice.default_config();
-    buzzer_slice.set_top(16383);
-    buzzer_slice.set_div_int(2);
-    buzzer_slice.set_div_frac(13);
-    buzzer_slice.enable();
+    //     f_pwm = 125_000_000 / (2.8125 * 16385) = 2713 Hz.
+    let mut pwm_config = PwmConfig::default();
+    pwm_config.top = 16384;
+    // `divider` is the 8.4 fixed point value above and defaults to 1, so it is
+    // scaled by 45/16 to reach 2 + 13/16 without naming the `fixed` types.
+    pwm_config.divider = pwm_config.divider * 45 / 16;
 
-    let mut buzzer_channel = buzzer_slice.channel_a;
-    buzzer_channel.output_to(pins.gpio28);
+    let buzzer_channel = Pwm::new_output_a(peripherals.PWM_SLICE6, peripherals.PIN_28, pwm_config);
 
     // --------------------------------------
     //            SPI / SD Setup
     // --------------------------------------
     #[cfg(feature = "power-board")]
     let vol_mgr = {
-        let spi_tx: SpiTxPin = pins.gpio3.reconfigure();
-        let spi_rx: SpiRxPin = pins.gpio4.reconfigure();
-        let spi_sck: SpiSckPin = pins.gpio2.reconfigure();
+        let mut spi_config = SpiConfig::default();
+        spi_config.frequency = SPI_FREQ_HZ;
+        // `SpiConfig` defaults to mode 0, which is what the SD card wants.
 
-        let spi = Spi::<_, _, _, 8>::new(peripherals.SPI0, (spi_tx, spi_rx, spi_sck)).init(
-            &mut peripherals.RESETS,
-            SYS_CLOCK_HZ.Hz(),
-            400.kHz(),
-            embedded_hal::spi::MODE_0,
+        let spi = Spi::new_blocking(
+            peripherals.SPI0,
+            peripherals.PIN_2,
+            peripherals.PIN_3,
+            peripherals.PIN_4,
+            spi_config,
         );
 
         // Promote SPI Bus to Static
         let spi_bus_ref = SPI_BUS.init(RefCell::new(spi));
 
         // CS Pin
-        let sd_cs = pins
-            .gpio1
-            .into_push_pull_output_in_state(rp2040_hal::gpio::PinState::High);
+        let sd_cs = Output::new(peripherals.PIN_1, Level::High);
 
         // Create SPI Device (Borrows from SPI_BUS static)
         // We do NOT need to make this device static. SdCard owns it.
-        // `Timer` is `Copy`, so the same instance backs both delay slots.
-        let sd_device = SpiRefCellDevice::new(spi_bus_ref, sd_cs, timer).unwrap();
+        // `CycleDelay` is `Copy`, so the same instance backs both delay slots.
+        let sd_device = SpiRefCellDevice::new(spi_bus_ref, sd_cs, delay()).unwrap();
 
         // Create SD Card (Owns sd_device)
-        let sd_card = embedded_sdmmc::SdCard::new(sd_device, timer);
+        let sd_card = embedded_sdmmc::SdCard::new(sd_device, delay());
 
         Some(embedded_sdmmc::VolumeManager::new(
             sd_card,
@@ -310,7 +294,7 @@ pub fn uferris_init(mut peripherals: Peripherals) -> UferrisRp2040 {
     // --------------------------------------
     //          Board Instantiation
     // --------------------------------------
-    let uferris = Uferris::new(
+    Uferris::new(
         led,
         button,
         buzzer_channel,
@@ -323,18 +307,5 @@ pub fn uferris_init(mut peripherals: Peripherals) -> UferrisRp2040 {
         #[cfg(feature = "power-board")]
         ina_i2c,
     )
-    .unwrap();
-
-    // --------------------------------------
-    //            Console Setup
-    // --------------------------------------
-    #[cfg(feature = "usb-console")]
-    crate::console::rp2040::init(
-        peripherals.USBCTRL_REGS,
-        peripherals.USBCTRL_DPRAM,
-        clocks.usb_clock,
-        &mut peripherals.RESETS,
-    );
-
-    uferris
+    .unwrap()
 }

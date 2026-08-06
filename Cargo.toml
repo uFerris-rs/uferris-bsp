@@ -59,11 +59,11 @@ xiao-nrf52840 = [
 
 ## Xiao RP2040 Device Support
 xiao-rp2040 = [
-    "dep:rp2040-hal",
-    "rp2040-hal/rt",
-    "rp2040-hal/critical-section-impl",
-    "dep:rp2040-boot2",
-    "dep:critical-section",
+    "dep:embassy-rp",
+    "embassy-rp/rp2040",
+    "embassy-rp/rt",
+    "embassy-rp/critical-section-impl",
+    "dep:cortex-m",
     "static_cell",
     "portable-atomic/critical-section",
 ]
@@ -82,9 +82,6 @@ xiao-rp2350 = [
 ## uFerris Megalops Power Board Extension Support
 power-board = []
 
-## USB CDC serial console for boards without native serial-over-USB hardware
-## (currently RP2040)
-usb-console = ["dep:usb-device", "dep:usbd-serial"]
 ## `async` Support Feature Flag. Currently ESP-only: pulls in `esp-rtos` and
 ## enables its embassy scheduler/time-driver integration.
 async = ["dep:esp-rtos", "esp-rtos/embassy"]
@@ -102,16 +99,10 @@ document-features = "0.2.11"
 static_cell = { version = "2.1.1", optional = true }
 # Device HALs
 esp-hal = { version = "~1.1", optional = true, features = ["unstable"] }
-rp2040-hal = { version = "0.12.0", optional = true }
-rp2040-boot2 = { version = "0.3.0", optional = true }
 embassy-rp = { version = "0.10.0", optional = true }
 embassy-nrf = { version = "0.11.0", optional = true }
 portable-atomic = { version = "1.13.1", optional = true }
-critical-section = { version = "1.2.0", optional = true }
 cortex-m = { version = "0.7.7", optional = true }
-# USB CDC console stack, pulled in by the `usb-console` feature.
-usb-device = { version = "0.3.2", optional = true }
-usbd-serial = { version = "0.2.2", optional = true }
 
 
 [package.metadata.docs.rs]

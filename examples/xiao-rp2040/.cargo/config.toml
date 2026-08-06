@@ -1,7 +1,8 @@
 [target.thumbv6m-none-eabi]
-# Deploys the UF2 to a Xiao RP2040 in bootloader mode, then opens the serial
-# monitor on the USB CDC device the examples print to.
-runner = "elf2uf2-rs -d -s"
+# Converts the ELF to a UF2 and deploys it to a Xiao RP2040 in bootloader mode.
+# There is no monitor step: nothing is printed, so there is nothing to attach to
+# (see the README).
+runner = "elf2uf2-rs -d"
 
 [env]
 
@@ -13,6 +14,11 @@ rustflags = [
   # The cortex-m-rt linker script.
   "-C",
   "link-arg=-Tlink.x",
+  # The `embassy-rp` linker script fragment. It places the second stage
+  # bootloader `embassy-rp` supplies into the `BOOT2` region `memory.x` carves
+  # out, and is only emitted for the RP2040.
+  "-C",
+  "link-arg=-Tlink-rp.x",
 ]
 
 target = "thumbv6m-none-eabi"
