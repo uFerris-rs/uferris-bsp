@@ -45,7 +45,15 @@ The architechture adds two layers on top of existing community crates:
 
 ## `async` Support
 
-Although there is an `async` feature flag, async support is not implemented yet. The flag currently only starts the `esp-rtos` embassy scheduler on ESP devices (it is not yet supported on other controllers). Adding full async support would require implementing async versions of the main board methods (most likely using `embedded-hal-async` traits), possibly backed by the embassy HALs used in either async or blocking mode.
+The `async` feature flag enables the `async` board API. The board driver carries a **mode type parameter**: `Uferris<.., Blocking>` is the API this crate has always had and is what you get by default, and `Uferris<.., Async>` is the same board with every operation that has to reach the I2C bus or the ADC turned into an `async fn`, built against the `embedded-hal-async` traits. Turning the flag on adds the second mode; it does not change the first, so existing programs are unaffected.
+
+The `async` board also gains `wait_for_sw5()`, which suspends until button 5 is pressed rather than spinning on the pin — button 5 is the one push button wired straight to the controller instead of to the I/O expander.
+
+**The runtime is the application's, not the BSP's.** The crate starts no executor and installs no time driver: it hands back a board whose methods are futures, and the program brings its own executor (`embassy-executor`, say) and its own delay (`embassy-time`). That is a deliberate change — the flag used to start the `esp-rtos` scheduler on ESP devices, and no longer does.
+
+Support is rolling out **one board at a time**. A board opts in by adding an `uferris_init_async` alongside its blocking `uferris_init`; the Xiao nRF54L15 is the first, and the rest are still blocking-only. The `async` column in the table below tracks this. See [`examples/xiao-nrf54l15/README.md`](examples/xiao-nrf54l15/README.md) for a worked example, including the executor and time driver wiring.
+
+The `async` power board API (INA219, SD card) is not implemented yet: under `Async` those fields are parked and the power board methods stay blocking-only.
 
 ## Support Status
 
@@ -58,8 +66,8 @@ Although there is an `async` feature flag, async support is not implemented yet.
 | [Xiao ESP32-S3 Sense](https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-esp32s3`     | ✅             | ❌              |
 | [Xiao nRF52840](https://www.seeedstudio.com/Seeed-XIAO-BLE-nRF52840-p-5201.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | `xiao-nrf52840`       | ✅ [^2] [^3]   | ❌              |
 | [Xiao nRF52840 Sense](https://www.seeedstudio.com/Seeed-XIAO-BLE-Sense-nRF52840-p-5253.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-nrf52840`    | ✅ [^2] [^3]   | ❌              |
-| [Xiao nRF54L15](https://www.seeedstudio.com/XIAO-nRF54L15-p-6493.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | `xiao-nrf54l15`       | ✅ [^4]        | ❌              |
-| [Xiao nRF54L15 Sense](https://www.seeedstudio.com/XIAO-nRF54L15-Sense-p-6494.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-nrf54l15`    | ✅ [^4]        | ❌              |
+| [Xiao nRF54L15](https://www.seeedstudio.com/XIAO-nRF54L15-p-6493.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | `xiao-nrf54l15`       | ✅ [^4]        | ✅ [^5]         |
+| [Xiao nRF54L15 Sense](https://www.seeedstudio.com/XIAO-nRF54L15-Sense-p-6494.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-nrf54l15`    | ✅ [^4]        | ✅ [^5]         |
 | [Xiao RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | `xiao-rp2350`         | ✅ [^2]        | ❌              |
 | [Xiao RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | `xiao-rp2040`         | ✅ [^2]        | ❌              |
 | [Xiao SAMD21](https://www.seeedstudio.com/Seeeduino-XIAO-Arduino-Microcontroller-SAMD21-Cortex-M0+-p-4426.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | -                     | ❌             | ❌              |
@@ -74,6 +82,8 @@ Although there is an `async` feature flag, async support is not implemented yet.
 [^3]: The Xiao nRF52840 is flashed **over its resident UF2 bootloader only**. The examples are linked at `0x27000`, above the SoftDevice a stock board ships with, and `cargo run` hands the bootloader a UF2 file. Flashing over SWD is not supported and can leave the board needing a debug probe to recover — see [`examples/xiao-nrf52840/README.md`](examples/xiao-nrf52840/README.md). The same feature covers the nRF52840 Sense: it is the same chip, and the Sense's extra onboard sensors are not part of the carrier board API.
 
 [^4]: The Xiao nRF54L15 examples **do print**. The board's USB-C connector goes to an onboard CMSIS-DAP debugger rather than to the MCU, so a single `cargo run` flashes the image and then streams the output back over **RTT** in the same terminal — no bootloader mode and no external probe. RTT is the native console here rather than a workaround: the nRF54L15 has no USB peripheral at all, so unlike the other boards nothing changes when `async` support lands. The same feature covers the nRF54L15 Sense: it is the same chip, and the Sense's extra onboard sensors are not part of the carrier board API. See [`examples/xiao-nrf54l15/README.md`](examples/xiao-nrf54l15/README.md).
+
+[^5]: The Xiao nRF54L15 is the **first board with `async` support**. Its adapter has an `uferris_init_async` next to the blocking `uferris_init`, and the two example binaries `blinky_async` and `baseboard_demo_async` run on it. The base board is covered; the power board is not (see above). The other controllers are blocking-only for now — their adapters build the same board they always have, whether or not the `async` feature is on.
 
 
 
@@ -96,7 +106,7 @@ Available Cargo features:
 - `xiao-rp2040` — Xiao RP2040 Device Support
 - `xiao-rp2350` — Xiao RP2350 Device Support
 - `powerboard` — µFerris Megalops Power Board Extension Support
-- `async` — `async` Support Feature Flag (currently ESP-only; starts the `esp-rtos` embassy scheduler)
+- `async` — `async` Support Feature Flag (enables the `Uferris<.., Async>` board API; the executor and time driver are the application's)
 
 ## Quick Start / Usage
 Generally, you need to:

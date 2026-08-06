@@ -18,15 +18,12 @@ default = []
 ## Xiao ESP32-C3 Device Support
 xiao-esp32c3 = [
     "esp-hal/esp32c3",
-    "esp-rtos?/esp-alloc",
-    "esp-rtos?/esp32c3",
     "static_cell",
 
 ]
 ## Xiao ESP32-C5 Device Support
 xiao-esp32c5 = [
     "esp-hal/esp32c5",
-    "esp-rtos?/esp32c5",
     "static_cell",
     "portable-atomic/critical-section",
 ]
@@ -34,7 +31,6 @@ xiao-esp32c5 = [
 ## Xiao ESP32-C6 Device Support
 xiao-esp32c6 = [
     "esp-hal/esp32c6",
-    "esp-rtos?/esp32c6",
     "static_cell",
     "portable-atomic/critical-section",
 ]
@@ -42,7 +38,6 @@ xiao-esp32c6 = [
 ## Xiao ESP32-S3 Device Support
 xiao-esp32s3 = [
     "esp-hal/esp32s3",
-    "esp-rtos?/esp32s3",
     "static_cell",
 ]
 
@@ -93,14 +88,24 @@ xiao-rp2350 = [
 ## uFerris Megalops Power Board Extension Support
 power-board = []
 
-## `async` Support Feature Flag. Currently ESP-only: pulls in `esp-rtos` and
-## enables its embassy scheduler/time-driver integration.
-async = ["dep:esp-rtos", "esp-rtos/embassy"]
+## `async` Support Feature Flag. Enables the `async` board API — the
+## `Uferris<.., Async>` mode, whose I2C and ADC operations are `async fn`s. This
+## is a pure code gate: the executor and the time driver are the application's
+## responsibility, the BSP starts neither. Board adapters opt in one at a time
+## by adding an `uferris_init_async`; the Xiao nRF54L15 is the first.
+async = [
+    "dep:embedded-hal-async",
+    "dep:embassy-embedded-hal",
+    "dep:embassy-sync",
+    # `embedded_hal_async::digital::Wait` for `Input`, which is what
+    # `wait_for_sw5` waits on, lives behind `embassy-nrf`'s `gpiote` feature.
+    "embassy-nrf?/gpiote",
+]
 
 
 [dependencies]
-esp-rtos = { version = "0.3.0", optional = true }
 embedded-hal = "1.0.0"
+embedded-hal-async = { version = "1.0.0", optional = true }
 embedded-hal-bus = "0.3.0"
 nb = "1.0.0"
 bitmask-enum = "2.2.5"
@@ -108,6 +113,10 @@ ina219 = "0.2.0"
 embedded-sdmmc = "0.9.0"
 document-features = "0.2.11"
 static_cell = { version = "2.1.1", optional = true }
+# Shared `async` bus support, used by the `async` board adapters. Both track the
+# versions the embassy HALs already depend on, so Cargo unifies them.
+embassy-embedded-hal = { version = "0.6.0", optional = true, default-features = false }
+embassy-sync = { version = "0.8.0", optional = true }
 # Device HALs
 esp-hal = { version = "~1.1", optional = true, features = ["unstable"] }
 embassy-rp = { version = "0.10.0", optional = true }

@@ -20,6 +20,18 @@
 //! boards with no console at all pass [`NoopWriter`], which throws the bytes
 //! away. Write errors are always discarded — a demo must not stop because a
 //! console is not attached.
+//!
+//! ## `async`
+//!
+//! With the `async` feature on, the [`asynch`] module carries the same demos
+//! written against the `async` board API, for the boards that have an
+//! `uferris_init_async`. They print the same text; what changes is that the
+//! board operations are awaited and that waiting for button 5 suspends the task
+//! instead of spinning on the pin.
+
+/// The `async` demo bodies, for boards brought up with an `uferris_init_async`.
+#[cfg(feature = "async")]
+pub mod asynch;
 
 use core::fmt::Write;
 use embedded_hal::delay::DelayNs;

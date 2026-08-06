@@ -1,7 +1,14 @@
+use core::marker::PhantomData;
 use core::ops::Not;
 
 use bitmask_enum::bitmask;
 use embedded_hal::i2c::I2c;
+#[cfg(feature = "async")]
+use embedded_hal_async::i2c::I2c as AsyncI2c;
+
+#[cfg(feature = "async")]
+use crate::Async;
+use crate::{Blocking, Mode};
 
 // ------------------------------------------
 // Constants & Registers
@@ -81,15 +88,26 @@ pub enum SevenSegDigit {
 // Driver Struct
 // ------------------------------------------
 
-pub struct IoExpander<I2C> {
+/// The TCA6424 I/O expander the carrier board hangs its LEDs, switches and
+/// seven segment display off.
+///
+/// `M` selects the board mode: see [`Mode`]. Both modes expose the same
+/// methods, they just differ in whether the I2C traffic is awaited.
+pub struct IoExpander<I2C, M = Blocking> {
     i2c: I2C,
+    _mode: PhantomData<M>,
 }
 
-impl<I2C: I2c> IoExpander<I2C> {
+impl<I2C, M: Mode> IoExpander<I2C, M> {
     pub fn new(i2c: I2C) -> Self {
-        Self { i2c }
+        Self {
+            i2c,
+            _mode: PhantomData,
+        }
     }
+}
 
+impl<I2C: I2c> IoExpander<I2C, Blocking> {
     pub fn init(&mut self) -> Result<(), I2C::Error> {
         // Write configuration to each port individually
         // Configure I/O Expander pins before moving I2C to shared state
@@ -272,5 +290,200 @@ impl<I2C: I2c> IoExpander<I2C> {
 
     fn write_register(&mut self, reg: u8, value: u8) -> Result<(), I2C::Error> {
         self.i2c.write(TCA6424_ADDR, &[reg, value])
+    }
+}
+
+// ------------------------------------------
+// Driver Struct - `async` Mode
+// ------------------------------------------
+
+#[cfg(feature = "async")]
+impl<I2C: AsyncI2c> IoExpander<I2C, Async> {
+    pub async fn init(&mut self) -> Result<(), I2C::Error> {
+        // Write configuration to each port individually
+        // Configure I/O Expander pins before moving I2C to shared state
+        // Write I/O Direction to TCA6424 Config Registers
+        self.i2c
+            .write(
+                TCA6424_ADDR,
+                &[CONFIG_PORT0, PORT0_DIR, PORT1_DIR, PORT2_DIR],
+            )
+            .await
+            .unwrap();
+        // Reset all output ports to low
+        self.i2c
+            .write(TCA6424_ADDR, &[OUT_PORT0, 0, 0, 0])
+            .await
+            .unwrap();
+        Ok(())
+    }
+
+    // Active Low example
+    pub async fn led2_on(&mut self) -> Result<(), I2C::Error> {
+        let port2 = self.read_register(OUT_PORT1).await?;
+        let new_port2 = port2 | IoExpPort1::Led2.bits();
+        self.write_register(OUT_PORT1, new_port2).await
+    }
+
+    pub async fn led2_off(&mut self) -> Result<(), I2C::Error> {
+        let port1 = self.read_register(OUT_PORT1).await?;
+        let new_port1 = port1 & IoExpPort1::Led2.bits().not();
+        self.write_register(OUT_PORT1, new_port1).await
+    }
+
+    pub async fn led3_on(&mut self) -> Result<(), I2C::Error> {
+        let port1 = self.read_register(OUT_PORT1).await?;
+        let new_port1 = port1 | IoExpPort1::Led3.bits();
+        self.write_register(OUT_PORT1, new_port1).await
+    }
+
+    pub async fn led3_off(&mut self) -> Result<(), I2C::Error> {
+        let port1 = self.read_register(OUT_PORT1).await?;
+        let new_port1 = port1 & IoExpPort1::Led3.bits().not();
+        self.write_register(OUT_PORT1, new_port1).await
+    }
+
+    // ------------------------------------------
+    // Switch Inputs
+    // ------------------------------------------
+
+    pub async fn read_sw1(&mut self) -> Result<bool, I2C::Error> {
+        let port0 = self.read_register(IN_PORT0).await?;
+        if port0 & IoExpPort0::Sw1.bits() == 0 {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    pub async fn read_sw2(&mut self) -> Result<bool, I2C::Error> {
+        let port0 = self.read_register(IN_PORT0).await?;
+        if port0 & IoExpPort0::Sw2.bits() == 0 {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    pub async fn read_sw3(&mut self) -> Result<bool, I2C::Error> {
+        let port0 = self.read_register(IN_PORT0).await?;
+        if port0 & IoExpPort0::Sw3.bits() == 0 {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    pub async fn read_sw4(&mut self) -> Result<bool, I2C::Error> {
+        let port0 = self.read_register(IN_PORT0).await?;
+        if port0 & IoExpPort0::Sw4.bits() == 0 {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    pub async fn read_slide_sw6_position(&mut self) -> Result<SwPos, I2C::Error> {
+        let port2 = self.read_register(IN_PORT1).await?;
+
+        if port2 & IoExpPort1::Sw6Pos1.bits() == 0 {
+            Ok(SwPos::Down)
+        } else if port2 & IoExpPort1::Sw6Pos2.bits() == 0 {
+            Ok(SwPos::Up)
+        } else {
+            Ok(SwPos::Undefined)
+        }
+    }
+
+    pub async fn read_slide_sw7_position(&mut self) -> Result<SwPos, I2C::Error> {
+        let port0 = self.read_register(IN_PORT0).await?;
+
+        if port0 & IoExpPort0::Sw7Pos1.bits() == 0 {
+            Ok(SwPos::Down)
+        } else if port0 & IoExpPort0::Sw7Pos2.bits() == 0 {
+            Ok(SwPos::Up)
+        } else {
+            Ok(SwPos::Undefined)
+        }
+    }
+
+    // ------------------------------------------
+    // Seven Segment Display
+    // ------------------------------------------
+
+    pub async fn write_seven_segment_digit(
+        &mut self,
+        digit: SevenSegDigit,
+        value: Option<u8>,
+    ) -> Result<(), I2C::Error> {
+        // 1. Activate the Specified Digit (Port 1)
+        let digit_bits = match digit {
+            SevenSegDigit::Digit1 => IoExpPort1::Digit1.bits(),
+            SevenSegDigit::Digit2 => IoExpPort1::Digit2.bits(),
+            SevenSegDigit::Digit3 => IoExpPort1::Digit3.bits(),
+            SevenSegDigit::Digit4 => IoExpPort1::Digit4.bits(),
+        };
+
+        let port1 = self.read_register(OUT_PORT1).await?;
+        // Clear existing digit bits (0-3) then set the new one
+        let new_port1 = (port1 & 0xF0) | digit_bits;
+        self.write_register(OUT_PORT1, new_port1).await?;
+
+        // 2. Write the Segments (Port 2)
+        let segment_map = match value {
+            Some(v) => match v {
+                0 => 0b00111111,
+                1 => 0b00000110,
+                2 => 0b10011011,
+                3 => 0b10001111,
+                4 => 0b10100110,
+                5 => 0b10101101,
+                6 => 0b10111101,
+                7 => 0b00000111,
+                8 => 0b10111111,
+                9 => 0b10101111,
+                _ => 0b00000000,
+            },
+            None => 0x00,
+        };
+
+        self.write_register(OUT_PORT2, segment_map).await
+    }
+
+    pub async fn seven_segment_display_colon_en(&mut self, enable: bool) -> Result<(), I2C::Error> {
+        // 1. Activate Digits 2 & 4 (Port 1)
+        let digits = IoExpPort1::Digit2.or(IoExpPort1::Digit4).bits();
+        let mut port1 = self.read_register(OUT_PORT1).await?;
+        if enable {
+            port1 |= digits;
+        } else {
+            port1 &= !digits;
+        }
+        self.write_register(OUT_PORT1, port1).await?;
+
+        // 2. Activate Colon (DP pin on Port 2)
+        let mut port2 = self.read_register(OUT_PORT2).await?;
+        if enable {
+            port2 |= IoExpPort2::Dp.bits();
+        } else {
+            port2 &= !IoExpPort2::Dp.bits();
+        }
+
+        self.write_register(OUT_PORT2, port2).await
+    }
+
+    // ------------------------------------------
+    // Helper Methods
+    // ------------------------------------------
+
+    /// Reads a single byte from a register
+    async fn read_register(&mut self, reg: u8) -> Result<u8, I2C::Error> {
+        let mut buf = [0u8];
+        self.i2c.write_read(TCA6424_ADDR, &[reg], &mut buf).await?;
+        Ok(buf[0])
+    }
+
+    async fn write_register(&mut self, reg: u8, value: u8) -> Result<(), I2C::Error> {
+        self.i2c.write(TCA6424_ADDR, &[reg, value]).await
     }
 }

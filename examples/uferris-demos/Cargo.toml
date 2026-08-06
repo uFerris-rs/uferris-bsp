@@ -7,6 +7,7 @@ publish = false
 
 [dependencies]
 embedded-hal = "1.0.0"
+embedded-hal-async = { version = "1.0.0", optional = true }
 
 # The generic board API only: no device feature is selected here. The example
 # crate that pulls this in brings its own device feature, and Cargo unifies the
@@ -17,3 +18,6 @@ uferris-bsp = { path = "../..", default-features = false }
 [features]
 # uFerris Megalops Power Board Extension Support. Gates `full_board_demo`.
 power-board = ["uferris-bsp/power-board"]
+
+# The `async` demo bodies. Gates the `asynch` module.
+async = ["dep:embedded-hal-async", "uferris-bsp/async"]

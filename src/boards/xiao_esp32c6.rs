@@ -1,7 +1,5 @@
 use core::cell::RefCell;
 use embedded_hal_bus::i2c::RefCellDevice as I2cRefCellDevice;
-#[cfg(feature = "async")]
-use esp_hal::timer::timg::TimerGroup;
 use esp_hal::{
     analog::adc::{Adc, AdcConfig, AdcPin, Attenuation},
     gpio::{Input, InputConfig, Level, Output, OutputConfig},
@@ -92,16 +90,12 @@ pub type UferrisEsp32 = Uferris<
 // Board Initialization Function
 // ------------------------------------------
 pub fn uferris_init(peripherals: Peripherals) -> UferrisEsp32 {
-    // --------------------------------------
-    //            Embassy Setup
-    // --------------------------------------
-    #[cfg(feature = "async")]
-    {
-        let timg0 = TimerGroup::new(peripherals.TIMG0);
-        let sw_interrupt =
-            esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
-        esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
-    }
+    // The `async` feature is a pure code gate: it selects the `async` board API
+    // and starts nothing. Whatever scheduler and time driver an application
+    // wants — `esp-rtos` and its embassy integration, say — is the
+    // application's to start, before it calls in here. `async` support for the
+    // ESP boards is a later milestone: this adapter builds the blocking board
+    // in every configuration.
 
     // --------------------------------------
     //              ADC Setup
