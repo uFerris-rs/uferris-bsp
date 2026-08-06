@@ -23,6 +23,9 @@ static_cell = "2.1.1"
 
 uferris-bsp = { path = "../..", features = ["xiao-esp32s3"] }
 
+# The demo bodies, shared by every board's examples.
+uferris-demos = { path = "../uferris-demos" }
+
 
 [[bin]]
 name = "blinky"
@@ -40,7 +43,7 @@ required-features = ["power-board"]
 
 
 [features]
-power-board = ["uferris-bsp/power-board"]
+power-board = ["uferris-bsp/power-board", "uferris-demos/power-board"]
 
 [profile.dev]
 # Rust debug is too slow.

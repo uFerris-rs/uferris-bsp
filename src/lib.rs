@@ -75,18 +75,11 @@
 //! uferris.led1_on();
 //! ```
 //!
-
-#[cfg(not(any(
-    feature = "xiao-esp32c3",
-    feature = "xiao-esp32c5",
-    feature = "xiao-esp32c6",
-    feature = "xiao-esp32s3",
-    feature = "xiao-nrf52840",
-    feature = "xiao-nrf54l15",
-    feature = "xiao-rp2040",
-    feature = "xiao-rp2350"
-)))]
-compile_error!("At least one Xiao device feature must be enabled");
+//! If no device feature is enabled, only the generic board API is available —
+//! `uferris_init` requires selecting your Xiao's feature. This is what code
+//! written against the board API alone, without a controller in the picture,
+//! builds against.
+//!
 
 use core::fmt;
 use core::marker::PhantomData; // Added this import
@@ -203,6 +196,21 @@ where
     BD: PowerConstraints,
 {
     /// Create a new generic uFerris board instance.
+    // Only the board adapters call this, so with no device feature enabled
+    // there is no caller and the compiler would otherwise flag it as dead.
+    #[cfg_attr(
+        not(any(
+            feature = "xiao-esp32c3",
+            feature = "xiao-esp32c5",
+            feature = "xiao-esp32c6",
+            feature = "xiao-esp32s3",
+            feature = "xiao-nrf52840",
+            feature = "xiao-nrf54l15",
+            feature = "xiao-rp2040",
+            feature = "xiao-rp2350"
+        )),
+        allow(dead_code)
+    )]
     fn new(
         led1_pin: LED,
         sw_btn5_pin: BTN,

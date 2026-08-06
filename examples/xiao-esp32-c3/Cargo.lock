@@ -1276,6 +1276,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "uferris-demos"
+version = "0.1.0"
+dependencies = [
+ "embedded-hal 1.0.0",
+ "uferris-bsp",
+]
+
+[[package]]
 name = "ufmt-write"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1362,6 +1370,7 @@ dependencies = [
  "esp-println",
  "static_cell",
  "uferris-bsp",
+ "uferris-demos",
 ]
 
 [[package]]

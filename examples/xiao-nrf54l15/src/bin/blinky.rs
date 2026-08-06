@@ -7,7 +7,6 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-use embedded_hal::delay::DelayNs;
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use uferris_bsp::boards::xiao_nrf54l15::delay;
@@ -32,16 +31,8 @@ fn main() -> ! {
 
     let mut delay = delay();
 
-    // A Constant to Control the Speed of the test/Demo Loop
-    const TEST_DELAY_MS: u32 = 200;
-
     rprintln!("Blinking LED 1");
 
-    loop {
-        uferris.led1_on();
-        delay.delay_ms(TEST_DELAY_MS);
-
-        uferris.led1_off();
-        delay.delay_ms(TEST_DELAY_MS);
-    }
+    // The demo itself is shared by every board: see `examples/uferris-demos`.
+    uferris_demos::blinky(&mut uferris, &mut delay)
 }

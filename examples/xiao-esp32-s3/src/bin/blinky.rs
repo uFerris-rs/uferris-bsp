@@ -31,16 +31,8 @@ fn main() -> ! {
 
     let mut uferris = uferris_init(peripherals);
 
-    let delay = Delay::new();
+    let mut delay = Delay::new();
 
-    // A Constant to Control the Speed of the test/Demo Loop
-    const TEST_DELAY_MS: u32 = 200;
-
-    loop {
-        uferris.led1_on();
-        delay.delay_millis(TEST_DELAY_MS);
-
-        uferris.led1_off();
-        delay.delay_millis(TEST_DELAY_MS);
-    }
+    // The demo itself is shared by every board: see `examples/uferris-demos`.
+    uferris_demos::blinky(&mut uferris, &mut delay)
 }

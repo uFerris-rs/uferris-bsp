@@ -133,6 +133,9 @@ Each supported board has a self-contained example project under [`examples/`](ex
 Each board directory is a self-contained Cargo project with its own target, toolchain, and runner configuration.
 See each board's README for the full list of examples it supports.
 
+The demos themselves are written once, in [`examples/uferris-demos/`](examples/uferris-demos/): every board runs the same code against the generic board API.
+A board's `src/bin/*.rs` only brings the controller up, opens whatever console it has, and hands both to the shared demo.
+
 | Board | Examples |
 | ----- | -------- |
 | Xiao ESP32-C3 | [`examples/xiao-esp32-c3/`](examples/xiao-esp32-c3/) |

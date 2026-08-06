@@ -24,6 +24,9 @@ embedded-hal = "1.0.0"
 
 uferris-bsp = { path = "../..", features = ["xiao-nrf54l15"] }
 
+# The demo bodies, shared by every board's examples.
+uferris-demos = { path = "../uferris-demos" }
+
 
 [[bin]]
 name = "blinky"
@@ -41,7 +44,7 @@ required-features = ["power-board"]
 
 
 [features]
-power-board = ["uferris-bsp/power-board"]
+power-board = ["uferris-bsp/power-board", "uferris-demos/power-board"]
 
 [profile.dev]
 # Rust debug is too slow.

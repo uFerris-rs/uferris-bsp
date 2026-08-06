@@ -1,0 +1,19 @@
+[package]
+edition = "2024"
+name = "uferris-demos"
+rust-version = "1.88"
+version = "0.1.0"
+publish = false
+
+[dependencies]
+embedded-hal = "1.0.0"
+
+# The generic board API only: no device feature is selected here. The example
+# crate that pulls this in brings its own device feature, and Cargo unifies the
+# two into a single `uferris-bsp` build.
+uferris-bsp = { path = "../..", default-features = false }
+
+
+[features]
+# uFerris Megalops Power Board Extension Support. Gates `full_board_demo`.
+power-board = ["uferris-bsp/power-board"]
