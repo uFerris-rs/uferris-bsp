@@ -1,0 +1,22 @@
+[target.thumbv8m.main-none-eabihf]
+# Loads the ELF onto a Xiao RP2350 in bootloader mode and starts it. `elf2uf2-rs`
+# does not support the RP2350, and unlike it `picotool` does not open a serial
+# monitor, so the monitor has to be started by hand (see the README).
+runner = "picotool load -u -v -x -t elf"
+
+[env]
+
+[build]
+rustflags = [
+  # Keep the flash image compact: do not page-align sections.
+  "-C",
+  "link-arg=--nmagic",
+  # The cortex-m-rt linker script.
+  "-C",
+  "link-arg=-Tlink.x",
+  # The RP2350 Arm core.
+  "-C",
+  "target-cpu=cortex-m33",
+]
+
+target = "thumbv8m.main-none-eabihf"

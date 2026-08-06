@@ -57,6 +57,17 @@ xiao-rp2040 = [
     "portable-atomic/critical-section",
 ]
 
+## Xiao RP2350 Device Support
+xiao-rp2350 = [
+    "dep:embassy-rp",
+    "embassy-rp/rp235xa",
+    "embassy-rp/rt",
+    "embassy-rp/critical-section-impl",
+    "embassy-rp/imagedef-none",
+    "dep:cortex-m",
+    "static_cell",
+]
+
 ## uFerris Megalops Power Board Extension Support
 power-board = []
 
@@ -82,8 +93,10 @@ static_cell = { version = "2.1.1", optional = true }
 esp-hal = { version = "~1.1", optional = true, features = ["unstable"] }
 rp2040-hal = { version = "0.12.0", optional = true }
 rp2040-boot2 = { version = "0.3.0", optional = true }
+embassy-rp = { version = "0.10.0", optional = true }
 portable-atomic = { version = "1.13.1", optional = true }
 critical-section = { version = "1.2.0", optional = true }
+cortex-m = { version = "0.7.7", optional = true }
 # USB CDC console stack, pulled in by the `usb-console` feature.
 usb-device = { version = "0.3.2", optional = true }
 usbd-serial = { version = "0.2.2", optional = true }

@@ -1,0 +1,53 @@
+[package]
+edition = "2024"
+name = "xiao-rp2350-examples"
+rust-version = "1.88"
+version = "0.1.0"
+publish = false
+
+[dependencies]
+# Used in blocking mode: no executor, no time driver, no `async`. The examples
+# only need it to acquire the peripheral singletons they hand to the BSP.
+embassy-rp = { version = "0.10.0", features = ["rp235xa"] }
+
+cortex-m-rt = "0.7.5"
+panic-halt = "1.0.0"
+
+embedded-hal = "1.0.0"
+
+# The Xiao RP2350 has no serial console yet, so these examples run silent. See
+# the README.
+uferris-bsp = { path = "../..", features = ["xiao-rp2350"] }
+
+
+[[bin]]
+name = "blinky"
+path = "src/bin/blinky.rs"
+
+
+[[bin]]
+name = "baseboard_demo"
+path = "src/bin/baseboard_demo.rs"
+
+[[bin]]
+name = "full_board_demo"
+path = "src/bin/full_board_demo.rs"
+required-features = ["power-board"]
+
+
+[features]
+power-board = ["uferris-bsp/power-board"]
+
+[profile.dev]
+# Rust debug is too slow.
+# For debug builds always builds with some optimization
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1        # LLVM can perform better optimizations using a single thread
+debug = 2
+debug-assertions = false
+incremental = false
+lto = 'fat'
+opt-level = 's'
+overflow-checks = false

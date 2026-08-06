@@ -36,6 +36,7 @@
 //! - Xiao ESP32-C6
 //! - Xiao ESP32-S3
 //! - Xiao RP2040
+//! - Xiao RP2350
 //!
 //! ## `async` Support
 //! Although there is an `async` feature, This crate does not support `async` yet. The feature currently only enables the esp-rtos embassy scheduler on ESP devices. Full support would entail adding board `async` method calls for the different functions in `lib.rs`.
@@ -78,7 +79,8 @@
     feature = "xiao-esp32c5",
     feature = "xiao-esp32c6",
     feature = "xiao-esp32s3",
-    feature = "xiao-rp2040"
+    feature = "xiao-rp2040",
+    feature = "xiao-rp2350"
 )))]
 compile_error!("At least one Xiao device feature must be enabled");
 
@@ -117,6 +119,8 @@ pub use boards::xiao_esp32c6::uferris_init;
 pub use boards::xiao_esp32s3::uferris_init;
 #[cfg(feature = "xiao-rp2040")]
 pub use boards::xiao_rp2040::uferris_init;
+#[cfg(feature = "xiao-rp2350")]
+pub use boards::xiao_rp2350::uferris_init;
 #[cfg(all(feature = "usb-console", feature = "xiao-rp2040"))]
 pub use console::wait_for_host;
 

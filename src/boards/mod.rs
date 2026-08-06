@@ -8,3 +8,5 @@ pub mod xiao_esp32c6;
 pub mod xiao_esp32s3;
 #[cfg(feature = "xiao-rp2040")]
 pub mod xiao_rp2040;
+#[cfg(feature = "xiao-rp2350")]
+pub mod xiao_rp2350;
