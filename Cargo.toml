@@ -46,6 +46,17 @@ xiao-esp32s3 = [
     "static_cell",
 ]
 
+## Xiao nRF52840 Device Support
+xiao-nrf52840 = [
+    "dep:embassy-nrf",
+    "embassy-nrf/nrf52840",
+    "embassy-nrf/rt",
+    "embassy-nrf/unstable-pac",
+    "dep:cortex-m",
+    "cortex-m/critical-section-single-core",
+    "static_cell",
+]
+
 ## Xiao RP2040 Device Support
 xiao-rp2040 = [
     "dep:rp2040-hal",
@@ -94,6 +105,7 @@ esp-hal = { version = "~1.1", optional = true, features = ["unstable"] }
 rp2040-hal = { version = "0.12.0", optional = true }
 rp2040-boot2 = { version = "0.3.0", optional = true }
 embassy-rp = { version = "0.10.0", optional = true }
+embassy-nrf = { version = "0.11.0", optional = true }
 portable-atomic = { version = "1.13.1", optional = true }
 critical-section = { version = "1.2.0", optional = true }
 cortex-m = { version = "0.7.7", optional = true }

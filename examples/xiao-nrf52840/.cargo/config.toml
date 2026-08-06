@@ -1,0 +1,25 @@
+[target.thumbv7em-none-eabihf]
+# Converts the ELF into a UF2 and copies it onto the mounted bootloader volume.
+# The Xiao nRF52840 is flashed over its resident Adafruit UF2 bootloader, so
+# there is no SWD step and no serial monitor (see the README). `--path auto`
+# picks whichever mounted volume carries an `INFO_UF2.TXT`, so the drive name
+# does not matter, and the load address comes from the ELF, which `memory.x`
+# links at 0x27000.
+runner = "uf2deploy deploy --family nrf52840 --path auto"
+
+[env]
+
+[build]
+rustflags = [
+  # Keep the flash image compact: do not page-align sections.
+  "-C",
+  "link-arg=--nmagic",
+  # The cortex-m-rt linker script.
+  "-C",
+  "link-arg=-Tlink.x",
+  # The nRF52840 core.
+  "-C",
+  "target-cpu=cortex-m4",
+]
+
+target = "thumbv7em-none-eabihf"

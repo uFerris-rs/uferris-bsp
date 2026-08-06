@@ -56,8 +56,8 @@ Although there is an `async` feature flag, async support is not implemented yet.
 | [Xiao ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | `xiao-esp32c6`       | ✅             | ❌              |
 | [Xiao ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)     | `xiao-esp32s3`       | ✅             | ❌              |
 | [Xiao ESP32-S3 Sense](https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-esp32s3`     | ✅             | ❌              |
-| [Xiao nRF52840](https://www.seeedstudio.com/Seeed-XIAO-BLE-nRF52840-p-5201.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | -                     | ❌             | ❌              |
-| [Xiao nRF52840 Sense](https://www.seeedstudio.com/Seeed-XIAO-BLE-Sense-nRF52840-p-5253.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | -                  | ❌             | ❌              |
+| [Xiao nRF52840](https://www.seeedstudio.com/Seeed-XIAO-BLE-nRF52840-p-5201.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | `xiao-nrf52840`       | ✅ [^2] [^3]   | ❌              |
+| [Xiao nRF52840 Sense](https://www.seeedstudio.com/Seeed-XIAO-BLE-Sense-nRF52840-p-5253.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-nrf52840`    | ✅ [^2] [^3]   | ❌              |
 | [Xiao nRF54L15](https://www.seeedstudio.com/XIAO-nRF54L15-p-6493.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | -                     | ❌             | ❌              |
 | [Xiao nRF54L15 Sense](https://www.seeedstudio.com/XIAO-nRF54L15-Sense-p-6494.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | -                  | ❌             | ❌              |
 | [Xiao RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | `xiao-rp2350`         | ✅ [^2]        | ❌              |
@@ -69,7 +69,9 @@ Although there is an `async` feature flag, async support is not implemented yet.
 
 [^1]: On the Xiao ESP32-C5 the buzzer is currently **stubbed and non-functional**. `esp-hal` does not yet provide a PWM (LEDC/MCPWM) driver for this chip, so the buzzer pin is only held low and `buzz_on`/`buzz_off` are accepted but do nothing. Every other baseboard peripheral works as usual.
 
-[^2]: On the Xiao RP2350 the examples currently run **without serial console output**. Every board peripheral works, but the Xiao RP2350 has no USB-to-UART bridge and the `embassy-rp` USB driver is `async` only, so there is nothing for `println!` to print over yet. A USB CDC console arrives with `async` support.
+[^2]: On the Xiao RP2350 and the Xiao nRF52840 the examples currently run **without serial console output**. Every board peripheral works, but neither board has a USB-to-UART bridge and the `embassy-rp` and `embassy-nrf` USB drivers are `async` only, so there is nothing for `println!` to print over yet. A USB CDC console arrives with `async` support.
+
+[^3]: The Xiao nRF52840 is flashed **over its resident UF2 bootloader only**. The examples are linked at `0x27000`, above the SoftDevice a stock board ships with, and `cargo run` hands the bootloader a UF2 file. Flashing over SWD is not supported and can leave the board needing a debug probe to recover — see [`examples/xiao-nrf52840/README.md`](examples/xiao-nrf52840/README.md). The same feature covers the nRF52840 Sense: it is the same chip, and the Sense's extra onboard sensors are not part of the carrier board API.
 
 
 
@@ -87,6 +89,7 @@ Available Cargo features:
 
 - `xiao-esp32c3` — Xiao ESP32-C3 Device Support
 - `xiao-esp32c5` — Xiao ESP32-C5 Device Support
+- `xiao-nrf52840` — Xiao nRF52840 Device Support
 - `xiao-rp2040` — Xiao RP2040 Device Support
 - `xiao-rp2350` — Xiao RP2350 Device Support
 - `powerboard` — µFerris Megalops Power Board Extension Support
