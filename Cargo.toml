@@ -57,6 +57,17 @@ xiao-nrf52840 = [
     "static_cell",
 ]
 
+## Xiao nRF54L15 Device Support
+xiao-nrf54l15 = [
+    "dep:embassy-nrf",
+    "embassy-nrf/nrf54l15-app-s",
+    "embassy-nrf/rt",
+    "embassy-nrf/unstable-pac",
+    "dep:cortex-m",
+    "cortex-m/critical-section-single-core",
+    "static_cell",
+]
+
 ## Xiao RP2040 Device Support
 xiao-rp2040 = [
     "dep:embassy-rp",

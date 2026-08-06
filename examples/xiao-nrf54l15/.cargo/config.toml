@@ -1,0 +1,22 @@
+[target.thumbv8m.main-none-eabihf]
+# Flashes the ELF through the debugger built onto the Xiao and then stays
+# attached, streaming the RTT output back over the same USB-C cable. There is
+# no bootloader step and no separate monitor (see the README).
+runner = "probe-rs run --chip nrf54l15"
+
+[env]
+
+[build]
+rustflags = [
+  # Keep the flash image compact: do not page-align sections.
+  "-C",
+  "link-arg=--nmagic",
+  # The cortex-m-rt linker script.
+  "-C",
+  "link-arg=-Tlink.x",
+  # The nRF54L15 application core.
+  "-C",
+  "target-cpu=cortex-m33",
+]
+
+target = "thumbv8m.main-none-eabihf"

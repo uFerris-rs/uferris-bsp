@@ -36,13 +36,16 @@ bind_interrupts!(
     /// these vectors stay dormant for the whole life of the program. No
     /// executor is involved.
     ///
-    /// Applications must therefore not bind `TWISPI0`, `SPIM3` or `SAADC`
-    /// themselves: those three peripherals belong to the board.
+    /// The nRF54L names its serial peripherals after the instance rather than
+    /// the protocol: `SERIAL22` is the TWIM the board uses for I2C and
+    /// `SERIAL00` is the SPIM it uses for the SD card. Applications must
+    /// therefore not bind `SERIAL22`, `SERIAL00` or `SAADC` themselves: those
+    /// three peripherals belong to the board.
     struct Irqs {
         SAADC => saadc::InterruptHandler;
-        TWISPI0 => twim::InterruptHandler<embassy_nrf::peripherals::TWISPI0>;
+        SERIAL22 => twim::InterruptHandler<embassy_nrf::peripherals::SERIAL22>;
         #[cfg(feature = "power-board")]
-        SPIM3 => spim::InterruptHandler<embassy_nrf::peripherals::SPI3>;
+        SERIAL00 => spim::InterruptHandler<embassy_nrf::peripherals::SERIAL00>;
     }
 );
 
@@ -50,23 +53,53 @@ bind_interrupts!(
 // Board Constants
 // ------------------------------------------
 
-/// CPU clock frequency of the nRF52840.
+/// CPU clock frequency of the nRF54L15.
 ///
-/// The core runs from a fixed 64 MHz clock regardless of which HFCLK source
-/// [`embassy_nrf::init`] leaves selected, so this is a constant rather than
-/// something read back from a clock tree.
+/// The nRF54L can run its core at either 64 MHz or 128 MHz, selected by
+/// [`embassy_nrf::config::Config::clock_speed`]. [`uferris_init`] leaves the
+/// `embassy-nrf` default of [`ClockSpeed::CK64`][clk] in place, so the core
+/// runs at 64 MHz and this is a constant rather than something read back from
+/// the clock tree.
+///
+/// [clk]: embassy_nrf::config::ClockSpeed::CK64
 const SYS_CLOCK_HZ: u32 = 64_000_000;
 
 /// I2C bus frequency shared by the io expander, the RTC and the power monitor.
 const I2C_FREQ: TwimFrequency = TwimFrequency::K100;
 
-/// SPI bus frequency used to talk to the SD card on the power board.
+/// SPI bus frequency requested for the SD card on the power board.
 ///
-/// The SPIM only offers a fixed ladder of bit rates, and SD cards have to be
-/// initialized at 400 kHz or less, so the 400 kHz the other boards use rounds
-/// *down* to the 250 kHz rung rather than up to 500 kHz.
+/// The SD specification wants a card initialized at 400 kHz or less, which is
+/// what the other boards ask for, but this bus cannot go that slow. The SD card
+/// pins land on port 2, and on the nRF54L the port 2 pads are wired to the fast
+/// peripherals only, which leaves `SERIAL00` as the one SPIM that can reach
+/// them. `SERIAL00` is clocked from the core PLL rather than the fixed 16 MHz
+/// the `SERIAL2x` instances run at, and its `PRESCALER.DIVISOR` field is seven
+/// bits wide, so the slowest bit rate it can produce is
+///
+///     64 MHz / 127 = 504 kHz
+///
+/// `embassy-nrf` still models the bit rate as the classic nRF ladder and turns
+/// it into a divisor at run time, so anything below 1 Mbps computes a divisor
+/// that does not fit the field: `K500` asks for 128 and `K250` for 256, and
+/// both are truncated to 0 on the way into the register. [`Frequency::M1`][f]
+/// is therefore the slowest rung that survives the conversion, and
+/// [`uferris_init`] narrows the divisor to [`SPI_DIVISOR`] afterwards to get
+/// back down to the hardware floor.
+///
+/// [f]: embassy_nrf::spim::Frequency::M1
 #[cfg(feature = "power-board")]
-const SPI_FREQ: SpimFrequency = SpimFrequency::K250;
+const SPI_FREQ: SpimFrequency = SpimFrequency::M1;
+
+/// `SERIAL00` `PRESCALER.DIVISOR` value written over the one [`SPI_FREQ`]
+/// produces, giving the slowest SD card clock this board can reach.
+///
+///     64_000_000 / 126 = 507_936 Hz
+///
+/// 126 rather than the 127 the field would hold, because the nRF54L SPIM
+/// divisor is documented as an even value.
+#[cfg(feature = "power-board")]
+const SPI_DIVISOR: u8 = 126;
 
 /// Scratch buffer the TWIM driver copies non-RAM write payloads into.
 ///
@@ -78,24 +111,31 @@ const TWIM_RAM_BUFFER_LEN: usize = 16;
 // ------------------------------------------
 // Static Types
 // ------------------------------------------
-static I2C_BUS: StaticCell<RefCell<Nrf52840I2c>> = StaticCell::new();
+static I2C_BUS: StaticCell<RefCell<Nrf54l15I2c>> = StaticCell::new();
 static TWIM_RAM_BUFFER: StaticCell<[u8; TWIM_RAM_BUFFER_LEN]> = StaticCell::new();
 #[cfg(feature = "power-board")]
-static SPI_BUS: StaticCell<RefCell<Nrf52840Spi>> = StaticCell::new();
+static SPI_BUS: StaticCell<RefCell<Nrf54l15Spi>> = StaticCell::new();
 
 // ------------------------------------------
 // Type Defs
 // ------------------------------------------
 
 // I2C Types
-type Nrf52840I2c = Twim<'static>;
-type SharedI2c = I2cRefCellDevice<'static, Nrf52840I2c>;
+type Nrf54l15I2c = Twim<'static>;
+type SharedI2c = I2cRefCellDevice<'static, Nrf54l15I2c>;
 
 // GPIO Types
 type LedPin = Output<'static>;
 type ButtonPin = Input<'static>;
 
 // ADC Types
+
+/// Number of `RESULT.MAXCNT` units one conversion occupies.
+///
+/// `MAXCNT` counts 16 bit samples on the nRF52 SAADC but bytes on the nRF54L
+/// one, so a single conversion has to be announced as two units here where the
+/// nRF52840 board announces one.
+const SAADC_CNT_UNIT: u16 = 2;
 
 /// The LDR channel of the SAADC, sampled one conversion at a time.
 pub struct LdrAdc {
@@ -117,6 +157,9 @@ impl OneShot for LdrAdc {
     /// keeps drawing current. No interrupt is ever enabled, so this cannot race
     /// the bound vector.
     ///
+    /// The one nRF54L specific part is `RESULT.MAXCNT`, which counts bytes
+    /// rather than samples here. See [`SAADC_CNT_UNIT`].
+    ///
     /// The SAADC is a signed converter: the board configures the channel as
     /// single ended at 12 bit resolution, which yields results in `0..=4095`,
     /// but noise around the bottom of the range can still push a conversion
@@ -133,7 +176,7 @@ impl OneShot for LdrAdc {
         let mut result: i16 = 0;
 
         r.result().ptr().write_value(&raw mut result as u32);
-        r.result().maxcnt().write(|w| w.set_maxcnt(1));
+        r.result().maxcnt().write(|w| w.set_maxcnt(SAADC_CNT_UNIT));
 
         r.events_end().write_value(0);
 
@@ -163,20 +206,20 @@ impl OneShot for LdrAdc {
 
 // SD/SPI Types
 #[cfg(feature = "power-board")]
-type Nrf52840Spi = Spim<'static>;
+type Nrf54l15Spi = Spim<'static>;
 
 #[cfg(feature = "power-board")]
 type SdCsPin = Output<'static>;
 
 #[cfg(feature = "power-board")]
 type SdBlockDevice =
-    embedded_sdmmc::SdCard<SpiRefCellDevice<'static, Nrf52840Spi, SdCsPin, CycleDelay>, CycleDelay>;
+    embedded_sdmmc::SdCard<SpiRefCellDevice<'static, Nrf54l15Spi, SdCsPin, CycleDelay>, CycleDelay>;
 
 // ------------------------------------------
 // uFerris Board Type Alias
 // ------------------------------------------
 #[cfg(not(feature = "power-board"))]
-pub type UferrisNrf52840 = Uferris<
+pub type UferrisNrf54l15 = Uferris<
     LedPin,           // LED (D1)
     ButtonPin,        // Button (D3)
     NrfBuzzerChannel, // Buzzer (D2)
@@ -186,7 +229,7 @@ pub type UferrisNrf52840 = Uferris<
 >;
 
 #[cfg(feature = "power-board")]
-pub type UferrisNrf52840 = Uferris<
+pub type UferrisNrf54l15 = Uferris<
     LedPin,           // LED (D1)
     ButtonPin,        // Button (D3)
     NrfBuzzerChannel, // Buzzer (D2)
@@ -205,11 +248,12 @@ pub type UferrisNrf52840 = Uferris<
 /// which needs an executor to be useful, so the blocking board adapter counts
 /// CPU cycles instead. [`cortex_m::asm::delay`] runs one loop iteration per
 /// requested cycle and every iteration costs at least one cycle, so the
-/// requested time is a lower bound: on the Cortex-M4 the loop takes about three
-/// cycles per iteration, and a delay can therefore run up to roughly three
-/// times long. That is the right side to err on for the SD card timings that
-/// need it, but it does mean the delays are coarse. An accurate timer backed
-/// delay arrives with `async` support, when `embassy-time` comes along anyway.
+/// requested time is a lower bound: on the Cortex-M33 the loop takes about
+/// three cycles per iteration, and a delay can therefore run up to roughly
+/// three times long. That is the right side to err on for the SD card timings
+/// that need it, but it does mean the delays are coarse. An accurate timer
+/// backed delay arrives with `async` support, when `embassy-time` comes along
+/// anyway.
 ///
 /// The type is a zero sized `Copy` marker, so every caller gets its own handle
 /// and it can back both delay slots of a shared SPI device at once.
@@ -241,36 +285,47 @@ pub const fn delay() -> CycleDelay {
 /// Initialize the uFerris board.
 ///
 /// `embassy-nrf` is used in blocking mode: no executor, no time driver and no
-/// `async` anywhere. [`embassy_nrf::init`] applies the chip errata workarounds
-/// and hands back the peripheral singletons, and every driver built here is
-/// driven through its blocking path, all of which implement the
-/// `embedded-hal` 1.0 blocking traits the board logic is written against.
+/// `async` anywhere. [`embassy_nrf::init`] selects the core clock, clears any
+/// leftover FLPR program and hands back the peripheral singletons, and every
+/// driver built here is driven through its blocking path, all of which
+/// implement the `embedded-hal` 1.0 blocking traits the board logic is written
+/// against.
 ///
-/// The `xiao-nrf52840` feature supplies the critical section implementation
+/// The board expects [`embassy_nrf::init`] to have been called with the default
+/// configuration, which keeps the core at 64 MHz — the frequency [`CycleDelay`]
+/// is scaled to — and resets the FLPR coprocessor, which a debugger reset
+/// otherwise leaves running and which can stall `init` if it is left alone.
+///
+/// The `xiao-nrf54l15` feature supplies the critical section implementation
 /// `embassy-nrf` needs through `cortex-m`'s `critical-section-single-core`,
 /// which masks interrupts on the calling core. That is sound here because the
-/// nRF52840 has a single core *and* because this crate never enables the
-/// SoftDevice: a running SoftDevice reserves the highest interrupt priorities
-/// for itself and keeps executing through a `BASEPRI`-style mask, which would
-/// break the mutual exclusion the single core implementation assumes. The stock
-/// Xiao ships with an S140 image resident in flash, but nothing here starts it.
+/// nRF54L15 application core is a single core and because nothing on this part
+/// plays the role the nRF52840 SoftDevice does: there is no SoftDevice for the
+/// nRF54L, so no higher priority code keeps executing through the mask. The
+/// FLPR coprocessor shares no memory with the peripherals the BSP touches, and
+/// `init` stops it in any case.
 ///
-/// There is no console on this board yet. The Xiao nRF52840 has no
-/// USB-to-UART bridge, so printing would mean driving a USB CDC device, and the
-/// `embassy-nrf` USB driver is `async` only. Applications therefore run silent
-/// until `async` support lands.
-pub fn uferris_init(peripherals: Peripherals) -> UferrisNrf52840 {
+/// Applications print over RTT: the nRF54L15 has no USB peripheral at all, so
+/// the onboard CMSIS-DAP debugger is the console, and `probe-rs run` carries
+/// both the image and the RTT stream over the one USB-C cable.
+pub fn uferris_init(peripherals: Peripherals) -> UferrisNrf54l15 {
     // --------------------------------------
     //              ADC Setup
     // --------------------------------------
 
-    // The LDR sits on D0 / P0.02, which is SAADC analog input AIN0.
+    // The LDR sits on D0 / P1.04. The nRF54L SAADC selects its input by port
+    // and pin rather than by an `AIN` channel number, so the pin is handed to
+    // `ChannelConfig` directly; only P1.04-P1.07 and P1.11-P1.14 are wired to
+    // the converter.
     //
-    // `ChannelConfig::single_ended` picks the internal 0.6 V reference with a
-    // gain of 1/6, so the input range is 0..3.6 V, and `SaadcConfig::default`
-    // is 12 bit with oversampling bypassed. That matches the 12-bit-in-a-`u16`
-    // reading the other boards return.
-    let ldr_channel = ChannelConfig::single_ended(peripherals.P0_02);
+    // `ChannelConfig::single_ended` picks the internal 0.9 V reference with a
+    // gain of 2/8, so the input range is 0..3.6 V, and `SaadcConfig::default`
+    // is 12 bit with oversampling bypassed. That is the same 0..3.6 V window
+    // and the same 12-bit-in-a-`u16` reading the nRF52840 board produces from
+    // its 0.6 V reference and 1/6 gain, and it clears the 3.3 V the LDR divider
+    // can reach without clipping. The next gain up, 2/7, would fold the range
+    // down to 3.15 V and clip a bright reading.
+    let ldr_channel = ChannelConfig::single_ended(peripherals.P1_04);
     let saadc = Saadc::new(
         peripherals.SAADC,
         Irqs,
@@ -287,11 +342,13 @@ pub fn uferris_init(peripherals: Peripherals) -> UferrisNrf52840 {
     // The uFerris carrier board fits the bus pull-ups, so the internal ones
     // stay off.
 
+    // D4 / P1.10 and D5 / P1.11. `SERIAL22` is the instance behind them:
+    // `SERIAL00`, the other one that could be reached from here, has no TWIM.
     let i2c = Twim::new(
-        peripherals.TWISPI0,
+        peripherals.SERIAL22,
         Irqs,
-        peripherals.P0_04,
-        peripherals.P0_05,
+        peripherals.P1_10,
+        peripherals.P1_11,
         i2c_config,
         TWIM_RAM_BUFFER.init([0u8; TWIM_RAM_BUFFER_LEN]),
     );
@@ -309,23 +366,25 @@ pub fn uferris_init(peripherals: Peripherals) -> UferrisNrf52840 {
     // --------------------------------------
     //              GPIO Setup
     // --------------------------------------
-    let led = Output::new(peripherals.P0_03, Level::Low, OutputDrive::Standard);
+    let led = Output::new(peripherals.P1_05, Level::Low, OutputDrive::Standard);
     // Floating input, matching the other boards: the button is wired active low
     // against a pull-up on the uFerris carrier board, so no internal pull is
     // configured here.
-    let button = Input::new(peripherals.P0_29, Pull::None);
+    let button = Input::new(peripherals.P1_07, Pull::None);
 
     // --------------------------------------
     //              PWM Setup
     // --------------------------------------
 
-    // The buzzer sits on D2 / P0.28, driven by channel 0 of PWM0. See
-    // `NrfBuzzerChannel` for the countertop and duty cycle maths.
+    // The buzzer sits on D2 / P1.06, driven by channel 0 of PWM20. See
+    // `NrfBuzzerChannel` for the countertop and duty cycle maths. The nRF54L
+    // PWM instances live in the same power domain as the port 1 pads, which is
+    // where D2 is, so PWM20 can drive it.
     let mut pwm_config = SimpleConfig::default();
     pwm_config.prescaler = Prescaler::Div1;
     pwm_config.max_duty = BUZZER_COUNTERTOP;
 
-    let pwm = SimplePwm::new_1ch(peripherals.PWM0, peripherals.P0_28, &pwm_config);
+    let pwm = SimplePwm::new_1ch(peripherals.PWM20, peripherals.P1_06, &pwm_config);
     let mut buzzer_channel = NrfBuzzerChannel::new(pwm);
     // `SimplePwm` does not start a sequence until a duty cycle is written, so
     // write one to put the pin in a defined, silent state.
@@ -340,20 +399,29 @@ pub fn uferris_init(peripherals: Peripherals) -> UferrisNrf52840 {
         spi_config.frequency = SPI_FREQ;
         // `SpimConfig` defaults to mode 0, which is what the SD card wants.
 
+        // D8 / P2.01, D9 / P2.04 and D10 / P2.02.
         let spi = Spim::new(
-            peripherals.SPI3,
+            peripherals.SERIAL00,
             Irqs,
-            peripherals.P1_13,
-            peripherals.P1_14,
-            peripherals.P1_15,
+            peripherals.P2_01,
+            peripherals.P2_04,
+            peripherals.P2_02,
             spi_config,
         );
+
+        // Slow the bus the rest of the way down to the 508 kHz floor. See
+        // `SPI_FREQ` for why this cannot be asked for through `SpimConfig`.
+        // Nothing has been transferred yet, so the write lands between the
+        // driver's own configuration and the first clock edge.
+        pac::SPIM00
+            .prescaler()
+            .write(|w| w.set_divisor(SPI_DIVISOR));
 
         // Promote SPI Bus to Static
         let spi_bus_ref = SPI_BUS.init(RefCell::new(spi));
 
         // CS Pin
-        let sd_cs = Output::new(peripherals.P1_12, Level::High, OutputDrive::Standard);
+        let sd_cs = Output::new(peripherals.P2_07, Level::High, OutputDrive::Standard);
 
         // Create SPI Device (Borrows from SPI_BUS static)
         // We do NOT need to make this device static. SdCard owns it.

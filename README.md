@@ -58,8 +58,8 @@ Although there is an `async` feature flag, async support is not implemented yet.
 | [Xiao ESP32-S3 Sense](https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-esp32s3`     | ✅             | ❌              |
 | [Xiao nRF52840](https://www.seeedstudio.com/Seeed-XIAO-BLE-nRF52840-p-5201.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | `xiao-nrf52840`       | ✅ [^2] [^3]   | ❌              |
 | [Xiao nRF52840 Sense](https://www.seeedstudio.com/Seeed-XIAO-BLE-Sense-nRF52840-p-5253.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-nrf52840`    | ✅ [^2] [^3]   | ❌              |
-| [Xiao nRF54L15](https://www.seeedstudio.com/XIAO-nRF54L15-p-6493.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | -                     | ❌             | ❌              |
-| [Xiao nRF54L15 Sense](https://www.seeedstudio.com/XIAO-nRF54L15-Sense-p-6494.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | -                  | ❌             | ❌              |
+| [Xiao nRF54L15](https://www.seeedstudio.com/XIAO-nRF54L15-p-6493.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)    | `xiao-nrf54l15`       | ✅ [^4]        | ❌              |
+| [Xiao nRF54L15 Sense](https://www.seeedstudio.com/XIAO-nRF54L15-Sense-p-6494.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris) | `xiao-nrf54l15`    | ✅ [^4]        | ❌              |
 | [Xiao RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | `xiao-rp2350`         | ✅ [^2]        | ❌              |
 | [Xiao RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | `xiao-rp2040`         | ✅ [^2]        | ❌              |
 | [Xiao SAMD21](https://www.seeedstudio.com/Seeeduino-XIAO-Arduino-Microcontroller-SAMD21-Cortex-M0+-p-4426.html?utm_source=blog&utm_medium=TER&utm_campaign=uFerris)      | -                     | ❌             | ❌              |
@@ -72,6 +72,8 @@ Although there is an `async` feature flag, async support is not implemented yet.
 [^2]: On the Xiao RP2040, the Xiao RP2350 and the Xiao nRF52840 the examples currently run **without serial console output**. Every board peripheral works, but none of these boards has a USB-to-UART bridge and the `embassy-rp` and `embassy-nrf` USB drivers are `async` only, so there is nothing for `println!` to print over yet. A USB CDC console arrives with `async` support. In the meantime, printing is available over RTT with `probe-rs` if a debug probe is wired to the board's SWD pads.
 
 [^3]: The Xiao nRF52840 is flashed **over its resident UF2 bootloader only**. The examples are linked at `0x27000`, above the SoftDevice a stock board ships with, and `cargo run` hands the bootloader a UF2 file. Flashing over SWD is not supported and can leave the board needing a debug probe to recover — see [`examples/xiao-nrf52840/README.md`](examples/xiao-nrf52840/README.md). The same feature covers the nRF52840 Sense: it is the same chip, and the Sense's extra onboard sensors are not part of the carrier board API.
+
+[^4]: The Xiao nRF54L15 examples **do print**. The board's USB-C connector goes to an onboard CMSIS-DAP debugger rather than to the MCU, so a single `cargo run` flashes the image and then streams the output back over **RTT** in the same terminal — no bootloader mode and no external probe. RTT is the native console here rather than a workaround: the nRF54L15 has no USB peripheral at all, so unlike the other boards nothing changes when `async` support lands. The same feature covers the nRF54L15 Sense: it is the same chip, and the Sense's extra onboard sensors are not part of the carrier board API. See [`examples/xiao-nrf54l15/README.md`](examples/xiao-nrf54l15/README.md).
 
 
 
@@ -90,6 +92,7 @@ Available Cargo features:
 - `xiao-esp32c3` — Xiao ESP32-C3 Device Support
 - `xiao-esp32c5` — Xiao ESP32-C5 Device Support
 - `xiao-nrf52840` — Xiao nRF52840 Device Support
+- `xiao-nrf54l15` — Xiao nRF54L15 Device Support
 - `xiao-rp2040` — Xiao RP2040 Device Support
 - `xiao-rp2350` — Xiao RP2350 Device Support
 - `powerboard` — µFerris Megalops Power Board Extension Support

@@ -1,3 +1,5 @@
+#[cfg(any(feature = "xiao-nrf52840", feature = "xiao-nrf54l15"))]
+pub mod nrf_buzzer;
 #[cfg(feature = "xiao-esp32c3")]
 pub mod xiao_esp32c3;
 #[cfg(feature = "xiao-esp32c5")]
@@ -8,6 +10,8 @@ pub mod xiao_esp32c6;
 pub mod xiao_esp32s3;
 #[cfg(feature = "xiao-nrf52840")]
 pub mod xiao_nrf52840;
+#[cfg(feature = "xiao-nrf54l15")]
+pub mod xiao_nrf54l15;
 #[cfg(feature = "xiao-rp2040")]
 pub mod xiao_rp2040;
 #[cfg(feature = "xiao-rp2350")]

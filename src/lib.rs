@@ -36,6 +36,7 @@
 //! - Xiao ESP32-C6
 //! - Xiao ESP32-S3
 //! - Xiao nRF52840 (and nRF52840 Sense)
+//! - Xiao nRF54L15 (and nRF54L15 Sense)
 //! - Xiao RP2040
 //! - Xiao RP2350
 //!
@@ -81,6 +82,7 @@
     feature = "xiao-esp32c6",
     feature = "xiao-esp32s3",
     feature = "xiao-nrf52840",
+    feature = "xiao-nrf54l15",
     feature = "xiao-rp2040",
     feature = "xiao-rp2350"
 )))]
@@ -114,6 +116,8 @@ pub use boards::xiao_esp32c5::uferris_init;
 pub use boards::xiao_esp32c6::uferris_init;
 #[cfg(feature = "xiao-esp32s3")]
 pub use boards::xiao_esp32s3::uferris_init;
+#[cfg(feature = "xiao-nrf54l15")]
+pub use boards::xiao_nrf54l15::uferris_init;
 #[cfg(feature = "xiao-nrf52840")]
 pub use boards::xiao_nrf52840::uferris_init;
 #[cfg(feature = "xiao-rp2040")]
