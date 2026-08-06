@@ -51,9 +51,10 @@
 //! The executor and the time driver are the application's responsibility. The
 //! BSP starts neither: it hands back a board whose methods are futures, and the
 //! program decides what runs them and where its delays come from. `async`
-//! support is rolling out per board — the Xiao nRF54L15 is the first one, and
-//! its adapter exposes an `uferris_init_async` alongside the blocking
-//! `uferris_init`.
+//! support is rolling out per board: a board opts in by exposing an
+//! `uferris_init_async` alongside its blocking `uferris_init`, and the Xiao
+//! nRF52840, nRF54L15, RP2040 and RP2350 have one. The ESP boards are
+//! blocking-only for now.
 //!
 //! ## Contributing to the uFerris BSP - Adding a New Xiao Board Support:
 //! Adding support for a new Xiao board entails two parts:
@@ -133,10 +134,16 @@ pub use boards::xiao_nrf54l15::uferris_init;
 pub use boards::xiao_nrf54l15::uferris_init_async;
 #[cfg(feature = "xiao-nrf52840")]
 pub use boards::xiao_nrf52840::uferris_init;
+#[cfg(all(feature = "xiao-nrf52840", feature = "async"))]
+pub use boards::xiao_nrf52840::uferris_init_async;
 #[cfg(feature = "xiao-rp2040")]
 pub use boards::xiao_rp2040::uferris_init;
+#[cfg(all(feature = "xiao-rp2040", feature = "async"))]
+pub use boards::xiao_rp2040::uferris_init_async;
 #[cfg(feature = "xiao-rp2350")]
 pub use boards::xiao_rp2350::uferris_init;
+#[cfg(all(feature = "xiao-rp2350", feature = "async"))]
+pub use boards::xiao_rp2350::uferris_init_async;
 
 // ------------------------------------------
 // Feature-Gated Trait Alias
@@ -620,7 +627,15 @@ where
     // call site is building is only pinned by the type it is being assigned or
     // returned into, which is too late for method resolution, so two inherent
     // `new`s would leave every adapter's call ambiguous.
-    #[cfg_attr(not(feature = "xiao-nrf54l15"), allow(dead_code))]
+    #[cfg_attr(
+        not(any(
+            feature = "xiao-nrf52840",
+            feature = "xiao-nrf54l15",
+            feature = "xiao-rp2040",
+            feature = "xiao-rp2350"
+        )),
+        allow(dead_code)
+    )]
     async fn new_async(
         led1_pin: LED,
         sw_btn5_pin: BTN,

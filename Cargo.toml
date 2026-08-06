@@ -92,7 +92,8 @@ power-board = []
 ## `Uferris<.., Async>` mode, whose I2C and ADC operations are `async fn`s. This
 ## is a pure code gate: the executor and the time driver are the application's
 ## responsibility, the BSP starts neither. Board adapters opt in one at a time
-## by adding an `uferris_init_async`; the Xiao nRF54L15 is the first.
+## by adding an `uferris_init_async`: the Xiao nRF52840, nRF54L15, RP2040 and
+## RP2350 have one, and the ESP boards are blocking-only for now.
 async = [
     "dep:embedded-hal-async",
     "dep:embassy-embedded-hal",
