@@ -45,15 +45,11 @@ The architechture adds two layers on top of existing community crates:
 
 ## `async` Support
 
-The `async` feature flag enables the `async` board API. The board driver carries a **mode type parameter**: `Uferris<.., Blocking>` is the API this crate has always had and is what you get by default, and `Uferris<.., Async>` is the same board with every operation that has to reach the I2C bus or the ADC turned into an `async fn`, built against the `embedded-hal-async` traits. Turning the flag on adds the second mode; it does not change the first, so existing programs are unaffected.
+This BSP supports `async` operation. This is enabled but activating the `async` feature flag which enables the `async` BSP API. The board driver carries a **mode type parameter**: `Uferris<.., Blocking>`, and `Uferris<.., Async>`, built against the `embedded-hal-async` traits. Turning the `async` flag on activates the second mode.
 
-The `async` board also gains `wait_for_sw5()`, which suspends until button 5 is pressed rather than spinning on the pin — button 5 is the one push button wired straight to the controller instead of to the I/O expander.
+The runtime, such as embassy, is proivided by the application, not the BSP. The crate starts no executor and installs no time driver. The BSP intialization hands back a board handle whose methods are futures, and the program brings its own executor (`embassy-executor`) and its own delay (`embassy-time`).
 
-**The runtime is the application's, not the BSP's.** The crate starts no executor and installs no time driver: it hands back a board whose methods are futures, and the program brings its own executor (`embassy-executor`, say) and its own delay (`embassy-time`). That is a deliberate change — the flag used to start the `esp-rtos` scheduler on ESP devices, and no longer does.
-
-Support is rolling out **one board at a time**. A board opts in by adding an `uferris_init_async` alongside its blocking `uferris_init`; the Xiao nRF54L15 was the first, and the Xiao nRF52840, RP2350 and RP2040 have followed. The ESP boards are still blocking-only. The `async` column in the table below tracks this. See [`examples/xiao-nrf54l15/README.md`](examples/xiao-nrf54l15/README.md) for a worked example, including the executor and time driver wiring.
-
-The `async` power board API (INA219, SD card) is not implemented yet: under `Async` those fields are parked and the power board methods stay blocking-only.
+Note that not all board functions might have async methods or support. However, the blocking functions would still be available in `async` mode.
 
 ## Support Status
 
