@@ -45,7 +45,7 @@ The architechture adds two layers on top of existing community crates:
 
 ## `async` Support
 
-This BSP supports `async` operation. This is enabled but activating the `async` feature flag which enables the `async` BSP API. The board driver carries a **mode type parameter**: `Uferris<.., Blocking>`, and `Uferris<.., Async>`, built against the `embedded-hal-async` traits. Turning the `async` flag on activates the second mode.
+This BSP supports `async` operation. This is enabled but activating the `async` feature flag which enables the `async` BSP API. The different modes are handled by using mode type parameters: `Uferris<.., Blocking>`, and `Uferris<.., Async>`, built against the `embedded-hal` and `embedded-hal-async` traits, respectively. 
 
 The runtime, such as embassy, is proivided by the application, not the BSP. The crate starts no executor and installs no time driver. The BSP intialization hands back a board handle whose methods are futures, and the program brings its own executor (`embassy-executor`) and its own delay (`embassy-time`).
 
