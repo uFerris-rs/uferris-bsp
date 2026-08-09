@@ -50,11 +50,18 @@
 //!
 //! The executor and the time driver are the application's responsibility. The
 //! BSP starts neither: it hands back a board whose methods are futures, and the
-//! program decides what runs them and where its delays come from. `async`
-//! support is rolling out per board: a board opts in by exposing an
-//! `uferris_init_async` alongside its blocking `uferris_init`, and the Xiao
-//! nRF52840, nRF54L15, RP2040 and RP2350 have one. The ESP boards are
-//! blocking-only for now.
+//! program decides what runs them and where its delays come from. A board opts
+//! in by exposing an `uferris_init_async` alongside its blocking
+//! `uferris_init`, and all eight supported Xiaos now have one.
+//!
+//! The ESP boards differ in one respect, because their runtime does. `esp-rtos`
+//! is started from two peripherals — `TIMG0` and `SW_INTERRUPT` — that live in
+//! the same `esp_hal::Peripherals` struct their `uferris_init_async` consumes
+//! whole, and its thread mode executor cannot suspend a task before the
+//! scheduler is running. Their init is therefore synchronous, and hands those
+//! two peripherals back next to the board so that the application can start the
+//! scheduler with them before its first `.await`. See any of the ESP board
+//! modules for the details.
 //!
 //! ## Contributing to the uFerris BSP - Adding a New Xiao Board Support:
 //! Adding support for a new Xiao board entails two parts:
@@ -122,12 +129,20 @@ pub mod boards;
 pub use crate::components::io_expander::SevenSegDigit;
 #[cfg(feature = "xiao-esp32c3")]
 pub use boards::xiao_esp32c3::uferris_init;
+#[cfg(all(feature = "xiao-esp32c3", feature = "async"))]
+pub use boards::xiao_esp32c3::uferris_init_async;
 #[cfg(feature = "xiao-esp32c5")]
 pub use boards::xiao_esp32c5::uferris_init;
+#[cfg(all(feature = "xiao-esp32c5", feature = "async"))]
+pub use boards::xiao_esp32c5::uferris_init_async;
 #[cfg(feature = "xiao-esp32c6")]
 pub use boards::xiao_esp32c6::uferris_init;
+#[cfg(all(feature = "xiao-esp32c6", feature = "async"))]
+pub use boards::xiao_esp32c6::uferris_init_async;
 #[cfg(feature = "xiao-esp32s3")]
 pub use boards::xiao_esp32s3::uferris_init;
+#[cfg(all(feature = "xiao-esp32s3", feature = "async"))]
+pub use boards::xiao_esp32s3::uferris_init_async;
 #[cfg(feature = "xiao-nrf54l15")]
 pub use boards::xiao_nrf54l15::uferris_init;
 #[cfg(all(feature = "xiao-nrf54l15", feature = "async"))]
@@ -617,11 +632,15 @@ where
     BD: PowerConstraints,
 {
     /// Create a new generic uFerris board instance in `async` mode.
-    // Only the board adapters with an `uferris_init_async` call this, so unless
-    // one of those device features is enabled there is no caller and the
-    // compiler would otherwise flag it as dead. `async` support is rolling out
-    // per board: add a board to this list when its adapter gains an
-    // `uferris_init_async`.
+    ///
+    /// This configures the I/O expander over the `async` bus on the way, which
+    /// is why it is a future. A board adapter that cannot await during its init
+    /// calls [`new_async_preinit`][Self::new_async_preinit] instead and brings
+    /// its own expander configuration — see there.
+    // Only the board adapters that await during their `uferris_init_async` call
+    // this, so unless one of those device features is enabled there is no
+    // caller and the compiler would otherwise flag it as dead. The ESP boards
+    // are deliberately absent: they go through `new_async_preinit`.
     //
     // Named `new_async` rather than `new`: the mode parameter of the board a
     // call site is building is only pinned by the type it is being assigned or
@@ -645,16 +664,74 @@ where
         rtc_i2c: I2C,
         raw_i2c: I2C,
     ) -> Result<Self, InitError> {
-        let mut expander = components::io_expander::IoExpander::new(expander_i2c);
-        let rtc = components::rtc::Rtc::new(rtc_i2c);
+        let mut board = Self::new_async_preinit(
+            led1_pin,
+            sw_btn5_pin,
+            pwm_pin,
+            ldr_driver,
+            expander_i2c,
+            rtc_i2c,
+            raw_i2c,
+        );
 
-        expander.init().await.map_err(|_| InitError::IoExpander)?;
+        board
+            .expander
+            .init()
+            .await
+            .map_err(|_| InitError::IoExpander)?;
+
+        Ok(board)
+    }
+
+    /// Assemble an `async` board, leaving the I/O expander alone.
+    ///
+    /// The same board [`new_async`][Self::new_async] builds, minus the one
+    /// thing in that function that has to await: configuring the expander's
+    /// port directions and clearing its outputs. A caller that uses this owes
+    /// the board that configuration, done some other way, before it drives
+    /// anything.
+    ///
+    /// The ESP boards are why this exists. `esp-rtos`'s thread mode executor
+    /// will not suspend a task before the scheduler is started, and the
+    /// scheduler is started from peripherals their `uferris_init_async` only
+    /// hands back when it returns, so nothing in their init may await. They
+    /// configure the expander over the blocking I2C driver instead — the same
+    /// registers with the same values, polled rather than awaited — and turn
+    /// the driver `async` afterwards. Every other board goes through
+    /// `new_async` and never sees this.
+    // Every board adapter with an `uferris_init_async` reaches this, four of
+    // them by way of `new_async`, so the list here is the full set: add a board
+    // to it when its adapter gains an `uferris_init_async`.
+    #[cfg_attr(
+        not(any(
+            feature = "xiao-esp32c3",
+            feature = "xiao-esp32c5",
+            feature = "xiao-esp32c6",
+            feature = "xiao-esp32s3",
+            feature = "xiao-nrf52840",
+            feature = "xiao-nrf54l15",
+            feature = "xiao-rp2040",
+            feature = "xiao-rp2350"
+        )),
+        allow(dead_code)
+    )]
+    fn new_async_preinit(
+        led1_pin: LED,
+        sw_btn5_pin: BTN,
+        pwm_pin: BUZZ,
+        ldr_driver: ADC,
+        expander_i2c: I2C,
+        rtc_i2c: I2C,
+        raw_i2c: I2C,
+    ) -> Self {
+        let expander = components::io_expander::IoExpander::new(expander_i2c);
+        let rtc = components::rtc::Rtc::new(rtc_i2c);
 
         let led1 = components::led::Led { pin: led1_pin };
         let sw_btn5 = components::button::Button::new(sw_btn5_pin);
         let buzzer = components::buzzer::Buzzer { pin: pwm_pin };
 
-        Ok(Self {
+        Self {
             led1,
             sw_btn5,
             buzzer,
@@ -667,7 +744,7 @@ where
             #[cfg(feature = "power-board")]
             power_monitor: (),
             _phantom: PhantomData,
-        })
+        }
     }
 
     /// Turn on LED 1

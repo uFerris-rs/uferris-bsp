@@ -21,6 +21,22 @@ esp-println = { version = "0.17.0", features = ["esp32s3"] }
 critical-section = "1.2.0"
 static_cell = "2.1.1"
 
+# The `async` runtime. It lives here, in the application, not in the BSP: the
+# BSP's `async` feature is a pure code gate and starts nothing. `esp-rtos` is
+# the scheduler `uferris_init_async` hands its `EspRtosParts` back for, and its
+# `embassy` feature is what supplies `#[esp_rtos::main]` and the time queue
+# behind `embassy-time`.
+esp-rtos = { version = "0.3.0", features = [
+  "embassy",
+  "esp-alloc",
+  "esp32s3",
+], optional = true }
+
+# No `arch-*` feature here: `esp-rtos` provides the executor these examples run
+# on, and enabling one on `embassy-executor` would install a second one.
+embassy-executor = { version = "0.10.0", features = [], optional = true }
+embassy-time = { version = "0.5.0", optional = true }
+
 uferris-bsp = { path = "../..", features = ["xiao-esp32s3"] }
 
 # The demo bodies, shared by every board's examples.
@@ -41,9 +57,27 @@ name = "full_board_demo"
 path = "src/bin/full_board_demo.rs"
 required-features = ["power-board"]
 
+[[bin]]
+name = "blinky_async"
+path = "src/bin/blinky_async.rs"
+required-features = ["async"]
+
+[[bin]]
+name = "baseboard_demo_async"
+path = "src/bin/baseboard_demo_async.rs"
+required-features = ["async"]
+
 
 [features]
 power-board = ["uferris-bsp/power-board", "uferris-demos/power-board"]
+
+async = [
+    "uferris-bsp/async",
+    "uferris-demos/async",
+    "dep:esp-rtos",
+    "dep:embassy-executor",
+    "dep:embassy-time",
+]
 
 [profile.dev]
 # Rust debug is too slow.

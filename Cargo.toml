@@ -91,15 +91,18 @@ power-board = []
 ## `async` Support Feature Flag. Enables the `async` board API — the
 ## `Uferris<.., Async>` mode, whose I2C and ADC operations are `async fn`s. This
 ## is a pure code gate: the executor and the time driver are the application's
-## responsibility, the BSP starts neither. Board adapters opt in one at a time
-## by adding an `uferris_init_async`: the Xiao nRF52840, nRF54L15, RP2040 and
-## RP2350 have one, and the ESP boards are blocking-only for now.
+## responsibility, the BSP starts neither. Every supported Xiao has an
+## `uferris_init_async` next to its blocking `uferris_init`.
 async = [
     "dep:embedded-hal-async",
     "dep:embassy-embedded-hal",
     "dep:embassy-sync",
     # `embedded_hal_async::digital::Wait` for `Input`, which is what
     # `wait_for_sw5` waits on, lives behind `embassy-nrf`'s `gpiote` feature.
+    # `esp-hal` needs nothing added: it depends on `embedded-hal-async`
+    # unconditionally and implements `Wait` for its `Input` the same way, and
+    # the `async` I2C and ADC drivers sit behind `unstable`, which the device
+    # features already turn on.
     "embassy-nrf?/gpiote",
 ]
 
