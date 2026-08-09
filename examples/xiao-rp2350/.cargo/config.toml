@@ -1,8 +1,8 @@
 [target.thumbv8m.main-none-eabihf]
-# Loads the ELF onto a Xiao RP2350 in bootloader mode and starts it. `elf2uf2-rs`
-# does not support the RP2350, and unlike it `picotool` does not open a serial
-# monitor, so the monitor has to be started by hand (see the README).
-runner = "picotool load -u -v -x -t elf"
+# Converts the ELF to UF2 and copies it onto a Xiao RP2350 in bootloader mode.
+# `elf2uf2-rs` does not support the RP2350, so the runner is `uf2deploy`
+# (`cargo install uf2deploy`), the same tool the Xiao nRF52840 example uses.
+runner = "uf2deploy deploy --family rp2350_arm_s --path auto"
 
 [env]
 

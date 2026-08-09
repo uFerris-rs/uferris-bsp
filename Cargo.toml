@@ -9,7 +9,7 @@ keywords = ["embedded", "uferris", "xiao", "no_std"]
 categories = ["embedded"]
 readme = "README.md"
 homepage = "https://theembeddedrustacean.com/"
-exclude = ["target/debug/*", "assets/*"]
+exclude = ["target/debug/*", "assets/*", "examples/"]
 
 [features]
 #! ⚠️ At least one Xiao device feature must be enabled when building the crate.

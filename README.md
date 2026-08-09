@@ -114,7 +114,7 @@ fn main() -> ! {
     let peripherals = your_hal::take().unwrap();
 
     // 2. Initialize the µFerris board abstraction
-    let mut uferris = uferris_init(peripherals).unwrap();
+    let mut uferris = uferris_init(peripherals);
 
     // 3. Use the board API
     uferris.led1_on();
@@ -134,7 +134,13 @@ A board's `src/bin/*.rs` only brings the controller up, opens whatever console i
 | Board | Examples |
 | ----- | -------- |
 | Xiao ESP32-C3 | [`examples/xiao-esp32-c3/`](examples/xiao-esp32-c3/) |
+| Xiao ESP32-C5 | [`examples/xiao-esp32-c5/`](examples/xiao-esp32-c5/) |
 | Xiao ESP32-C6 | [`examples/xiao-esp32-c6/`](examples/xiao-esp32-c6/) |
+| Xiao ESP32-S3 | [`examples/xiao-esp32-s3/`](examples/xiao-esp32-s3/) |
+| Xiao nRF52840 | [`examples/xiao-nrf52840/`](examples/xiao-nrf52840/) |
+| Xiao nRF54L15 | [`examples/xiao-nrf54l15/`](examples/xiao-nrf54l15/) |
+| Xiao RP2040 | [`examples/xiao-rp2040/`](examples/xiao-rp2040/) |
+| Xiao RP2350 | [`examples/xiao-rp2350/`](examples/xiao-rp2350/) |
 
 
 ## Running Examples
@@ -154,6 +160,15 @@ cargo run --bin blinky
 ```
 
 Use `cargo build --bin <example>` if you only want to compile without flashing.
+
+## AI use
+
+This project accepts AI-assisted contributions under conditions. Before opening a
+pull request, read [AI_POLICY.md](AI_POLICY.md). To summarize, AI as a tool is
+fine, but you must understand and be able to explain everything you submit; a
+human must be the interface for all contributions; disclosure is required in the
+PR template, and every change must state how it was verified. Autonomous agent
+submissions will be closed.
 
 ## License
 
