@@ -283,7 +283,7 @@ pub fn uferris_init(peripherals: Peripherals) -> UferrisEsp32 {
 
     buzzer_timer
         .configure(timer::config::Config {
-            duty: timer::config::Duty::Duty14Bit,
+            duty: timer::config::Duty::Duty10Bit,
             clock_source: timer::LSClockSource::APBClk,
             frequency: Rate::from_hz(2700u32),
         })
@@ -482,7 +482,7 @@ pub fn uferris_init_async(peripherals: Peripherals) -> (UferrisEsp32Async, EspRt
 
     buzzer_timer
         .configure(timer::config::Config {
-            duty: timer::config::Duty::Duty14Bit,
+            duty: timer::config::Duty::Duty10Bit,
             clock_source: timer::LSClockSource::APBClk,
             frequency: Rate::from_hz(2700u32),
         })
