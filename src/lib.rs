@@ -55,7 +55,7 @@
 //! `uferris_init`, and all eight supported Xiaos now have one.
 //!
 //! The ESP boards differ in one respect, because their runtime does. `esp-rtos`
-//! is started from two peripherals — `TIMG0` and `SW_INTERRUPT` — that live in
+//! is started from two peripherals — `TIMG0` and `FROM_CPU_INTR0` — that live in
 //! the same `esp_hal::Peripherals` struct their `uferris_init_async` consumes
 //! whole, and its thread mode executor cannot suspend a task before the
 //! scheduler is running. Their init is therefore synchronous, and hands those

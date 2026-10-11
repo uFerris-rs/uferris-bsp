@@ -1,22 +1,22 @@
 [package]
 edition = "2024"
 name = "xiao-esp32s3-examples"
-rust-version = "1.88"
+rust-version = "1.95"
 version = "0.1.0"
 publish = false
 
 [dependencies]
-esp-hal = { version = "~1.1", features = ["esp32s3", "unstable"] }
+esp-hal = { version = "~1.2", features = ["esp32s3", "unstable"] }
 
-esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32s3"] }
+esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32s3"] }
 
-esp-alloc = "0.10.0"
-esp-backtrace = { version = "0.19.0", features = [
+esp-alloc = { version = "0.11.0", features = ["esp32s3"] }
+esp-backtrace = { version = "0.20.0", features = [
   "esp32s3",
   "panic-handler",
   "println",
 ] }
-esp-println = { version = "0.17.0", features = ["esp32s3"] }
+esp-println = { version = "0.18.0", features = ["esp32s3"] }
 
 critical-section = "1.2.0"
 static_cell = "2.1.1"
@@ -26,7 +26,7 @@ static_cell = "2.1.1"
 # the scheduler `uferris_init_async` hands its `EspRtosParts` back for, and its
 # `embassy` feature is what supplies `#[esp_rtos::main]` and the time queue
 # behind `embassy-time`.
-esp-rtos = { version = "0.3.0", features = [
+esp-rtos = { version = "0.4.0", features = [
   "embassy",
   "esp-alloc",
   "esp32s3",
@@ -35,7 +35,7 @@ esp-rtos = { version = "0.3.0", features = [
 # No `arch-*` feature here: `esp-rtos` provides the executor these examples run
 # on, and enabling one on `embassy-executor` would install a second one.
 embassy-executor = { version = "0.10.0", features = [], optional = true }
-embassy-time = { version = "0.5.0", optional = true }
+embassy-time = { version = "0.5.1", optional = true }
 
 uferris-bsp = { path = "../..", features = ["xiao-esp32s3"] }
 

@@ -10,7 +10,6 @@
 use embassy_executor::Spawner;
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
-use esp_hal::interrupt::software::SoftwareInterruptControl;
 use esp_hal::timer::timg::TimerGroup;
 use uferris_bsp::uferris_init_async;
 
@@ -37,13 +36,12 @@ async fn main(_spawner: Spawner) -> ! {
     // `esp_rtos::start` want peripherals out of the one `Peripherals` struct,
     // and a partially moved struct cannot be passed on, so the BSP takes it
     // whole and hands the scheduler's two back. `uferris_init_async` is not a
-    // future for the same reason — nothing may await until the next three lines
+    // future for the same reason — nothing may await until the next two lines
     // have run.
     let (mut uferris, rtos_parts) = uferris_init_async(peripherals);
 
     let timg0 = TimerGroup::new(rtos_parts.timg0);
-    let sw_interrupt = SoftwareInterruptControl::new(rtos_parts.sw_interrupt);
-    esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
+    esp_rtos::start(timg0.timer0, rtos_parts.sw_interrupt);
 
     // From here on awaiting is safe.
 

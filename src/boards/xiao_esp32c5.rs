@@ -15,7 +15,7 @@ use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice as I2cAsyncDevice;
 #[cfg(feature = "async")]
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex as AsyncMutex};
 #[cfg(feature = "async")]
-use esp_hal::peripherals::{SW_INTERRUPT, TIMG0};
+use esp_hal::peripherals::{FROM_CPU_INTR0, TIMG0};
 
 #[cfg(feature = "power-board")]
 use embedded_hal_bus::spi::RefCellDevice as SpiRefCellDevice;
@@ -233,8 +233,7 @@ pub type UferrisEsp32Async = Uferris<
 /// let (mut uferris, rtos_parts) = uferris_init_async(peripherals);
 ///
 /// let timg0 = TimerGroup::new(rtos_parts.timg0);
-/// let sw_interrupt = SoftwareInterruptControl::new(rtos_parts.sw_interrupt);
-/// esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
+/// esp_rtos::start(timg0.timer0, rtos_parts.sw_interrupt);
 /// ```
 ///
 /// The BSP does not depend on `esp-rtos` and never will: these are plain
@@ -245,11 +244,9 @@ pub struct EspRtosParts {
     /// Timer group 0. `TimerGroup::new(timg0).timer0` is the tick
     /// `esp_rtos::start` wants; the board itself uses no timer group.
     pub timg0: TIMG0<'static>,
-    /// The software interrupt block.
-    /// `SoftwareInterruptControl::new(sw_interrupt).software_interrupt0` is the
-    /// context switch signal `esp_rtos::start` wants; the board uses none of
-    /// the four.
-    pub sw_interrupt: SW_INTERRUPT<'static>,
+    /// Software interrupt 0. It is the context switch signal
+    /// `esp_rtos::start` wants; the board uses no software interrupt.
+    pub sw_interrupt: FROM_CPU_INTR0<'static>,
 }
 
 // ------------------------------------------
@@ -418,7 +415,7 @@ pub fn uferris_init_async(peripherals: Peripherals) -> (UferrisEsp32Async, EspRt
     // used by the board.
     let rtos_parts = EspRtosParts {
         timg0: peripherals.TIMG0,
-        sw_interrupt: peripherals.SW_INTERRUPT,
+        sw_interrupt: peripherals.FROM_CPU_INTR0,
     };
 
     // --------------------------------------

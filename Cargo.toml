@@ -1,6 +1,6 @@
 [package]
 name = "uferris-bsp"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "A Board Support Package for the uFerris Learner Board"
 license = "MIT OR Apache-2.0"
@@ -111,22 +111,22 @@ async = [
 embedded-hal = "1.0.0"
 embedded-hal-async = { version = "1.0.0", optional = true }
 embedded-hal-bus = "0.3.0"
-nb = "1.0.0"
+nb = "1.1.0"
 bitmask-enum = "2.2.5"
-ina219 = "0.2.0"
-embedded-sdmmc = "0.9.0"
-document-features = "0.2.11"
+ina219 = "0.2.1"
+embedded-sdmmc = "0.10.0"
+document-features = "0.2.12"
 static_cell = { version = "2.1.1", optional = true }
 # Shared `async` bus support, used by the `async` board adapters. Both track the
 # versions the embassy HALs already depend on, so Cargo unifies them.
 embassy-embedded-hal = { version = "0.6.0", optional = true, default-features = false }
 embassy-sync = { version = "0.8.0", optional = true }
 # Device HALs
-esp-hal = { version = "~1.1", optional = true, features = ["unstable"] }
+esp-hal = { version = "~1.2", optional = true, features = ["unstable"] }
 embassy-rp = { version = "0.10.0", optional = true }
 embassy-nrf = { version = "0.11.0", optional = true }
-portable-atomic = { version = "1.13.1", optional = true }
-cortex-m = { version = "0.7.7", optional = true }
+portable-atomic = { version = "1.15.0", optional = true }
+cortex-m = { version = "0.7.9", optional = true }
 
 
 [package.metadata.docs.rs]

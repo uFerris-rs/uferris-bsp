@@ -26,7 +26,7 @@ const CONFIG_PORT0: u8 = 0x8C;
 // Direction Configuration for TCA6424
 // 0 = Output, 1 = Input
 const PORT0_DIR: u8 = 0xFF; // All inputs
-const PORT1_DIR: u8 = 0xC0; // All outputs except P17 and P16
+const PORT1_DIR: u8 = 0xC0; // All outputs except P17 (unused) and P16
 const PORT2_DIR: u8 = 0x00; // All outputs 
 
 // ------------------------------------------
@@ -35,26 +35,26 @@ const PORT2_DIR: u8 = 0x00; // All outputs
 
 #[bitmask(u8)]
 enum IoExpPort0 {
-    Sw7Pos1, // Port 0 Pin 0
-    Sw7Pos2, // Port 0 Pin 1
-    P02,     // Port 0 Pin 2 (Unused)
-    P03,     // Port 0 Pin 3 (Unused)
-    Sw4,     // Port 0 Pin 4
-    Sw3,     // Port 0 Pin 5
-    Sw2,     // Port 0 Pin 6
-    Sw1,     // Port 0 Pin 7
+    P00, // Port 0 Pin 0 (Unused)
+    Sw7, // Port 0 Pin 1
+    P02, // Port 0 Pin 2 (Unused)
+    P03, // Port 0 Pin 3 (Unused)
+    Sw4, // Port 0 Pin 4
+    Sw3, // Port 0 Pin 5
+    Sw2, // Port 0 Pin 6
+    Sw1, // Port 0 Pin 7
 }
 
 #[bitmask(u8)]
 enum IoExpPort1 {
-    Digit1,  // Port 1 Pin 0
-    Digit2,  // Port 1 Pin 1
-    Digit3,  // Port 1 Pin 2
-    Digit4,  // Port 1 Pin 3
-    Led2,    // Port 1 Pin 4
-    Led3,    // Port 1 Pin 5
-    Sw6Pos2, // Port 1 Pin 6
-    Sw6Pos1, // Port 1 Pin 7
+    Digit1, // Port 1 Pin 0
+    Digit2, // Port 1 Pin 1
+    Digit3, // Port 1 Pin 2
+    Digit4, // Port 1 Pin 3
+    Led2,   // Port 1 Pin 4
+    Led3,   // Port 1 Pin 5
+    Sw6,    // Port 1 Pin 6
+    P17,    // Port 1 Pin 7 (Unused)
 }
 
 #[bitmask(u8)]
@@ -189,26 +189,24 @@ impl<I2C: I2c> IoExpander<I2C, Blocking> {
     }
 
     pub fn read_slide_sw6_position(&mut self) -> Result<SwPos, I2C::Error> {
-        let port2 = self.read_register(IN_PORT1)?;
+        let port1 = self.read_register(IN_PORT1)?;
 
-        if port2 & IoExpPort1::Sw6Pos1.bits() == 0 {
-            Ok(SwPos::Down)
-        } else if port2 & IoExpPort1::Sw6Pos2.bits() == 0 {
+        // SW6 reads low when Up
+        if port1 & IoExpPort1::Sw6.bits() == 0 {
             Ok(SwPos::Up)
         } else {
-            Ok(SwPos::Undefined)
+            Ok(SwPos::Down)
         }
     }
 
     pub fn read_slide_sw7_position(&mut self) -> Result<SwPos, I2C::Error> {
         let port0 = self.read_register(IN_PORT0)?;
 
-        if port0 & IoExpPort0::Sw7Pos1.bits() == 0 {
+        // SW7 reads low when Down
+        if port0 & IoExpPort0::Sw7.bits() == 0 {
             Ok(SwPos::Down)
-        } else if port0 & IoExpPort0::Sw7Pos2.bits() == 0 {
-            Ok(SwPos::Up)
         } else {
-            Ok(SwPos::Undefined)
+            Ok(SwPos::Up)
         }
     }
 
@@ -384,26 +382,24 @@ impl<I2C: AsyncI2c> IoExpander<I2C, Async> {
     }
 
     pub async fn read_slide_sw6_position(&mut self) -> Result<SwPos, I2C::Error> {
-        let port2 = self.read_register(IN_PORT1).await?;
+        let port1 = self.read_register(IN_PORT1).await?;
 
-        if port2 & IoExpPort1::Sw6Pos1.bits() == 0 {
-            Ok(SwPos::Down)
-        } else if port2 & IoExpPort1::Sw6Pos2.bits() == 0 {
+        // SW6 reads low when Up
+        if port1 & IoExpPort1::Sw6.bits() == 0 {
             Ok(SwPos::Up)
         } else {
-            Ok(SwPos::Undefined)
+            Ok(SwPos::Down)
         }
     }
 
     pub async fn read_slide_sw7_position(&mut self) -> Result<SwPos, I2C::Error> {
         let port0 = self.read_register(IN_PORT0).await?;
 
-        if port0 & IoExpPort0::Sw7Pos1.bits() == 0 {
+        // SW7 reads low when Down
+        if port0 & IoExpPort0::Sw7.bits() == 0 {
             Ok(SwPos::Down)
-        } else if port0 & IoExpPort0::Sw7Pos2.bits() == 0 {
-            Ok(SwPos::Up)
         } else {
-            Ok(SwPos::Undefined)
+            Ok(SwPos::Up)
         }
     }
 
